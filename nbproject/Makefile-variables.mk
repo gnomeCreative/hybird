@@ -9,8 +9,8 @@ CND_DISTDIR=dist
 # Release configuration
 CND_PLATFORM_Release=Cygwin-Windows
 CND_ARTIFACT_DIR_Release=dist/Release/Cygwin-Windows
-CND_ARTIFACT_NAME_Release=hybirdnewnew
-CND_ARTIFACT_PATH_Release=dist/Release/Cygwin-Windows/hybirdnewnew
+CND_ARTIFACT_NAME_Release=hybird
+CND_ARTIFACT_PATH_Release=dist/Release/Cygwin-Windows/hybird
 CND_PACKAGE_DIR_Release=dist/Release/Cygwin-Windows/package
 CND_PACKAGE_NAME_Release=hybird.tar
 CND_PACKAGE_PATH_Release=dist/Release/Cygwin-Windows/package/hybird.tar

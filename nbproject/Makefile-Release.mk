@@ -63,11 +63,11 @@ LDLIBSOPTIONS=
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
-	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/hybirdnewnew.exe
+	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/hybird.exe
 
-${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/hybirdnewnew.exe: ${OBJECTFILES}
+${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/hybird.exe: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
-	g++ -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/hybirdnewnew ${OBJECTFILES} ${LDLIBSOPTIONS} -fopenmp
+	g++ -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/hybird ${OBJECTFILES} ${LDLIBSOPTIONS} -fopenmp
 
 ${OBJECTDIR}/DEM.o: DEM.cpp 
 	${MKDIR} -p ${OBJECTDIR}
@@ -115,7 +115,7 @@ ${OBJECTDIR}/vector.o: vector.cpp
 # Clean Targets
 .clean-conf: ${CLEAN_SUBPROJECTS}
 	${RM} -r ${CND_BUILDDIR}/${CND_CONF}
-	${RM} ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/hybirdnewnew.exe
+	${RM} ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/hybird.exe
 
 # Subprojects
 .clean-subprojects:

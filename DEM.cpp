@@ -50,8 +50,7 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
             sphereMat.dampCoeff=-1.0*log(sphereMat.restitution)/sqrt((log(sphereMat.restitution)*log(sphereMat.restitution)+M_PI*M_PI));
         }
     }
-
-
+    
     // tangential model //////////////////////
     PARSE_CLASS_MEMBER(lbmCfgFile, sphereMat.viscTang, "viscTang",1.0);
     ASSERT(sphereMat.viscTang>=0.0);
@@ -59,8 +58,6 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
     ASSERT(sphereMat.frictionCoefPart>=0.0);
     PARSE_CLASS_MEMBER(lbmCfgFile, sphereMat.frictionCoefWall, "frictionCoefWall",1.0);
     ASSERT(sphereMat.frictionCoefWall>=0.0);
-
-
 
     // particle initial state //////////////////////
     string particleFile;

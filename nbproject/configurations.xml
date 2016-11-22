@@ -68,7 +68,7 @@
           <developmentMode>5</developmentMode>
         </asmTool>
         <linkerTool>
-          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/hybirdnewnew</output>
+          <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/hybird</output>
           <linkerDynSerch>
             <pElem>./libmesh/lib/x86_64-unknown-linux-gnu_opt</pElem>
             <pElem>./muparser/lib</pElem>
