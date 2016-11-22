@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="95">
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Release" type="1">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <platform>3</platform>
+      </toolsSet>
+      <dbx_gdbdebugger version="1">
+        <gdb_pathmaps>
+        </gdb_pathmaps>
+        <gdb_interceptlist>
+          <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
+        </gdb_interceptlist>
+        <gdb_options>
+          <DebugOptions>
+            <option name="debug_command"
+                    value="Run Command	&quot;${OUTPUT_PATH}&quot; -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time"/>
+          </DebugOptions>
+        </gdb_options>
+        <gdb_buildfirst gdb_buildfirst_overriden="false" gdb_buildfirst_old="false"/>
+      </dbx_gdbdebugger>
+      <nativedebugger version="1">
+        <engine>gdb</engine>
+      </nativedebugger>
+      <runprofile version="9">
+        <runcommandpicklist>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -cs shellConfigNetcfg -cl lbmConfigBarrier.cfg -m halfNet.off -d ../results/barrier -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -cs shellConfigNet.cfg -cl lbmConfigBarrier.cfg -m halfNet.off -d ../results/barrier -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier.cfg -d ../results/barrier -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_4_2d_90_2.cfg -d ../results/maddalena -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevis.cfg -d ../results/devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevis.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c configureDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c configureFileDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+        </runcommandpicklist>
+        <runcommand>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommand>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+          <variable name="OMP_NUM_THREADS" value="4"/>
+        </environment>
+      </runprofile>
+    </conf>
+    <conf name="Debug" type="1">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <platform>3</platform>
+      </toolsSet>
+      <dbx_gdbdebugger version="1">
+        <gdb_pathmaps>
+        </gdb_pathmaps>
+        <gdb_interceptlist>
+          <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
+        </gdb_interceptlist>
+        <gdb_signals>
+        </gdb_signals>
+        <gdb_options>
+          <DebugOptions>
+            <option name="debug_command"
+                    value="Run Command	&quot;${OUTPUT_PATH}&quot; -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time"/>
+          </DebugOptions>
+        </gdb_options>
+        <gdb_buildfirst gdb_buildfirst_overriden="false" gdb_buildfirst_old="false"/>
+      </dbx_gdbdebugger>
+      <nativedebugger version="1">
+        <engine>gdb</engine>
+      </nativedebugger>
+      <runprofile version="9">
+        <runcommandpicklist>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -cs my_config.cfg -cl configAvalanche.cfg -m meshNet.off -d ../results/avalanche -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -cs configNet.cfg -cl configAvalanche.cfg -m meshNet.off -d ../results/avalanche -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -cs shellConfigNet.cfg -cl lbmConfigNet.cfg -m meshNet.off -d ../results/avalanche -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -cl lbmConfigSplash.cfg -cs my_config.cfg -m mesh.off -d ../results/AAAsplash -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -cl lbmConfigSettling.cfg -cs my_config.cfg -m mesh.off -d ../results/AAAsettling -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -cs shellConfigNet.cfg -cl lbmConfigNet.cfg -m halfNet.off -d ../results/avalanche -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -cl lbmConfigDrum.cfg -cs my_config.cfg -m mesh.off -d ../results/AAAdrum -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier.cfg -d ../results/barrier -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevis.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+        </runcommandpicklist>
+        <runcommand>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommand>
+        <rundir></rundir>
+        <buildfirst>true</buildfirst>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+          <variable name="OMP_NUM_THREADS" value="4"/>
+        </environment>
+      </runprofile>
+    </conf>
+  </confs>
+</configurationDescriptor>

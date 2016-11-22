@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <data xmlns="http://www.netbeans.org/ns/make-project-private/1">
+        <activeConfTypeElem>1</activeConfTypeElem>
+        <activeConfIndexElem>0</activeConfIndexElem>
+    </data>
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="1">
+        <file>
+            <url>shelly.cpp</url>
+            <bookmark id="1">
+                <name/>
+                <line>517</line>
+                <key/>
+            </bookmark>
+        </file>
+    </editor-bookmarks>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/cygwin64/home/admin/hybird/LB.h</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/IO.cpp</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/LB.cpp</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/vector.cpp</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/IO.h</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/elmt.h</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/vector.h</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/utils.h</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/DEM.cpp</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/DEM.h</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/macros.h</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/elmt.cpp</file>
+            <file>file:/C:/cygwin64/home/admin/hybird/hybird.cpp</file>
+        </group>
+    </open-files>
+</project-private>
