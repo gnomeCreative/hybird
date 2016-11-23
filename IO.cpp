@@ -22,6 +22,7 @@ void IO::initialize(){
     }
 
     
+    
     //  initialising energy file
     energyFileName=workDirectory+"/energy.dat";
     static int width = energyFile.precision() + 5;
