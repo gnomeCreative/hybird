@@ -8,13 +8,15 @@
 #ifndef DEM_H
 #define	DEM_H
 
-
-
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+#include <string>
+#include <sstream>
+#include <map>
 #include <stdlib.h>
 #include <math.h>
+#include <fstream>
 //
 #include "vector.h"
 #include "elmt.h"
@@ -44,9 +46,9 @@ private:
     // neighbor tables
     intList cellTable;
     unsIntList neighborTable;
-    unsIntList nearWallTable;
-    unsIntList nearObjectTable;
-    unsIntList nearCylinderTable;
+    //unsIntList nearWallTable;
+    //unsIntList nearObjectTable;
+    //unsIntList nearCylinderTable;
     unsIntList newNearCylinderTable;
     // capping distance to avoid infinite lubrication forces
     double minDistLub;
@@ -55,6 +57,11 @@ private:
     
     // prototype shape collection
     std::vector <vecList> prototypes;
+    
+    typedef std::vector<unsIntList> matrix;
+    matrix nearWallTable;
+    matrix nearObjectTable;
+    matrix nearCylinderTable;
 public:
     // energy
     energy particleEnergy;
@@ -84,6 +91,8 @@ public:
     particleList particles;
     // list with objects
     objectList objects;
+    //couple elongation list
+    map<string, Elongation> elongTable;
     // particles contains both standard particles and ghost particles. The total number of standard particles needs to be saved
     unsigned int stdParticles;
     // list with ghost elements
@@ -171,12 +180,23 @@ private:
     void wallParticleContacts(IO& io);
     void cylinderParticelContacts();
     void objectParticleContacts(IO& io);
-    inline void particleParticleCollision(const particle *partI, const particle *partJ, const tVect& vectorDistance, IO& io);
+    
+    inline void particleParticleCollision(const particle *partI, const particle *partJ, const tVect& vectorDistance, IO& io, Elongation& elongation);
+    inline void wallParticleCollision(wall *walli, const particle *partJ, const double& overlap, IO& io, Elongation& elongation);
+    inline void cylinderParticleCollision(cylinder *cylinderI, const particle *partJ, const double& overlap, IO& io, Elongation& elongation);
+    inline void objectParticleCollision(object *iObject, const particle *partJ, const tVect& vectorDistance, IO& io, Elongation& elongation);
+    
+    
+    //inline void particleParticleCollision(const particle *partI, const particle *partJ, const tVect& vectorDistance, IO& io);
     inline void wallParticleCollision(wall *walli, const particle *partJ, const double& overlap, IO& io);
     inline void cylinderParticleCollision(cylinder *cylinderI, const particle *partJ, const double& overlap);
     inline void objectParticleCollision(object *iObject, const particle *partJ, const tVect& vectorDistance, IO& io);
     double normalContact(const double& overlap, const double& vrelnnorm, const double& rEff, const double& massEff) const;
     double tangentialContact(const double& vreltNorm, const double& fn, const double& effRad, const double& effMass, const double& friction) const;
+    
+    tVect FRtangentialContact(const tVect& tangRelVelContact, const double& fn, 
+             const double& effMass, Elongation& elongation,const double& friction, const double& tangStiff, const double& viscTang);
+    
     void lubrication(int i, int j, double ri, double rj, tVect x0ij);
     // energy functions
     void updateEnergy();
@@ -184,6 +204,9 @@ private:
     void saveStatPPcollision(IO& io,const particle *partI, const particle *partJ, const double& overlap, const double& normNormalForce, const tVect& en, const double normTangForce, const tVect et) const;
     void saveStatWPcollision(IO& io,const wall *wallI, const particle *partJ, const double& overlap, const double& normNormalForce, const tVect& en, const double normTangForce, const tVect et) const ;
     void saveStatOPcollision(IO& io, const object *ObjectI, const particle *partJ, const double& overlap, const double& normNormalForce, const tVect& en, const double normTangForce, const tVect et) const;
+    
+    void deleteParticleElongation();
+    void deleteWallElongation();
 };
 
 #endif	/* DEM_H */

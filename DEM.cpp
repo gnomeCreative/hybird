@@ -2,8 +2,6 @@
 #include "DEM.h"
 #include "IO.h"
 
-
-
 #define USE_MATH_DEFINES
 
 using namespace std;
@@ -339,6 +337,12 @@ void DEM::discreteElementStep(IO& io){
 
         // updating energy
         updateEnergy();
+        
+        //delete particle particle elongation to solve non collision particles
+        deleteParticleElongation();
+        
+        //delete wall particle elongation to solve non collision
+        deleteWallElongation();
 
     }
 
@@ -1056,6 +1060,9 @@ void DEM::evaluateForces(IO& io) {
         elmts[n].FWall.reset();
         elmts[n].MParticle.reset();
         elmts[n].MWall.reset();
+        elmts[n].FSpringP.reset();
+        elmts[n].FSpringW.reset();
+        elmts[n].MRolling.reset();
     }
 
     for (int w=0; w<walls.size(); ++w) {
@@ -1102,7 +1109,7 @@ void DEM::evaluateForces(IO& io) {
         // rotational velocity (body-fixed reference frame)
         //const tVect wBf=2.0*quat2vec( q0adj.multiply( elmts[n].qp1 ) );
         // moment in global reference frame
-        const tVect moment=MVisc+elmts[n].MHydro+elmts[n].MParticle+elmts[n].MWall;
+        const tVect moment=MVisc+elmts[n].MHydro+elmts[n].MParticle+elmts[n].MWall+elmts[n].MRolling;
         
         // moment in body-fixed reference frame
         //if (elmts[n].size
@@ -1438,6 +1445,69 @@ void DEM::evalNearWallTable() {
     // inside a certain range (nebrRange)
 
     nearWallTable.clear();
+    unsIntList part;
+
+    for (wallList::iterator ip = walls.begin(); ip != walls.end(); ++ip) {
+        part.clear();
+
+        for (int n = 0; n < stdParticles; n++) {
+            if (ip->dist(particles[n].x0) < nebrRange) {
+                part.push_back(n);
+            }
+
+        }
+
+        nearWallTable.push_back(part); // to be reviewed
+
+    }
+}
+
+void DEM::evalNearObjectTable() {
+    // evaluate the distance of all particles to the walls. Creates a list of all particles
+    // inside a certain range (nebrRange)
+
+    nearObjectTable.clear();
+    unsIntList part;
+
+    const double nebrRange2 = nebrRange*nebrRange;
+
+    for (int o = 0; o < objects.size(); ++o) {
+        part.clear();
+        for (int n = 0; n < stdParticles; ++n) {
+            tVect x0ij = particles[n].x0 - objects[o].x0;
+            
+            if (x0ij.norm2() < nebrRange2) {
+                part.push_back(n);
+            }
+        }
+        nearObjectTable.push_back(part);
+    }
+}
+
+void DEM::evalNearCylinderTable() {
+    // evaluate the distance of all particles to the cylinders. Creates a list of all particles
+    // inside a certain range (nebrRange)
+
+    nearCylinderTable.clear();
+    unsIntList part;
+
+    for (cylinderList::iterator ip = cylinders.begin(); ip != cylinders.end(); ++ip) {
+        part.clear();
+        for (int n = 0; n < stdParticles; ++n) {
+            if (ip->dist(particles[n].x0) < nebrRange) {
+                part.push_back(n);
+
+            }
+        }
+        nearCylinderTable.push_back(part);
+    }
+}
+
+/*void DEM::evalNearWallTable() {
+    // evaluate the distance of all particles to the walls. Creates a list of all particles
+    // inside a certain range (nebrRange)
+
+    nearWallTable.clear();
 
     for (int n=0; n<stdParticles; ++n) {
         for (int w=0; w<walls.size(); ++w) {
@@ -1450,9 +1520,9 @@ void DEM::evalNearWallTable() {
             }
         }
     }
-}
+}*/
 
-void DEM::evalNearObjectTable() {
+/*void DEM::evalNearObjectTable() {
     // evaluate the distance of all particles to the walls. Creates a list of all particles
     // inside a certain range (nebrRange)
 
@@ -1470,9 +1540,9 @@ void DEM::evalNearObjectTable() {
             }
         }
     }
-}
+}*/
 
-void DEM::evalNearCylinderTable() {
+/*void DEM::evalNearCylinderTable() {
     // evaluate the distance of all particles to the cylinders. Creates a list of all particles
     // inside a certain range (nebrRange)
 
@@ -1486,7 +1556,7 @@ void DEM::evalNearCylinderTable() {
             }
         }
     }
-}
+}*/
 
 // periodicity functions
 
@@ -1632,6 +1702,15 @@ void DEM::particleParticleContacts(IO& io) {
          // pointers to particles
         const particle *parti=&particles[*ipi];
         const particle *partj=&particles[*ipj];
+        
+        string s;
+        if (parti->particleIndex>partj->particleIndex){
+        s = "p" + to_string(parti->particleIndex) + ":p" + to_string(partj->particleIndex);
+        }
+        else {
+        s = "p" + to_string(partj->particleIndex) + ":p" + to_string(parti->particleIndex);
+        }
+        
         // checking for overlap
         const double ri=parti->r;
         const double rj=partj->r;
@@ -1640,50 +1719,69 @@ void DEM::particleParticleContacts(IO& io) {
         // distance between centers
         const tVect vectorDistance=partj->x0-parti->x0;
         const double distance2=vectorDistance.norm2();
+
+        tVect spring = parti->x0 + vectorDistance / 2;
+
+        Elongation elongation_here = elongTable[s];
         // check for lubrication contact
             // check for contact
         if (distance2<sigij2) {
-            particleParticleCollision(parti,partj,vectorDistance,io);
-        }
+            //particleParticleCollision(parti,partj,vectorDistance,io);
+            particleParticleCollision(parti, partj, vectorDistance,io, elongation_here);
+            elongation_here.p = spring;
+            elongTable[s] = elongation_here;
+        } else {      
+                elongTable.erase(s); 
+            }
     }
 }
 
 void DEM::wallParticleContacts(IO& io) {
-
     // to keep conventions, the index i refers to the wall, and j the particle
+    
+    for (wallList::iterator ip = walls.begin(); ip != walls.end(); ip++) {
+        wall *wallI = &*ip;
+        //cout<<"muro n "<<wallI->index<<endl;
+        // cycling through particle in wall neighbor list
+        for (unsIntList::iterator it = nearWallTable[wallI->index].begin(); it != nearWallTable[wallI->index].end(); it++) {
 
-    // cycling through particles and walls in wall neighbor list
-    for (unsIntList::iterator ip=nearWallTable.begin(); ip!=nearWallTable.end(); ip=ip+2) {
-        // couple of contact candidates
-        unsIntList::iterator iwall=ip+1;
-        // particle
+            // particle
+            const particle *partJ = &particles[*it];
+
         const particle *partJ=&particles[*ip];
-        // wall
-        wall *wallI=&walls[*iwall];
         // radius
         const double rj=partJ->r;
         // distance from wall (norm)
         const double distance=wallI->dist(partJ->x0);
         bool wallIsOk=true;
+        
+         tVect spring = partJ->x0 - wallI->p;
+
+            const string s = "w" + to_string(wallI->index) + ":p" + to_string(partJ->particleIndex);
+
+            Elongation elongation_here = elongTable[s];
         if (wallIsOk) {
         // distance before contact
         const double overlap=rj-distance;
             if (overlap>0.0){
-                wallParticleCollision(wallI,partJ,overlap,io);
+                wallParticleCollision(wallI,partJ,overlap,io,elongation_here);
+                elongation_here.p = spring;
+                elongTable[s] = elongation_here;
+            } else {
+            elongTable.erase(s);
             }
         }
     }
+}
 }
 
 void DEM::cylinderParticelContacts() {
 
     // to keep conventions, the index i refers to the cylinder, and j the particle
+// cycling through the cylinders
+    for (cylinderList::iterator ip = cylinders.begin(); ip != cylinders.end(); ip++) {
+        cylinder *cylinderI = &*ip;
 
-    // cycling through the cylinders
-    for (cylinderList::iterator ip = cylinders.begin(); ip!=cylinders.end(); ip++) {
-        cylinder *cylinderI=&*ip;
-        // cycling through the cylinder neighbor particles
-        for (unsIntList::iterator it = nearCylinderTable.begin(); it!=nearCylinderTable.end(); it++) {
             // particle
             const particle *partJ=&particles[*it];
             // radius
@@ -1692,22 +1790,40 @@ void DEM::cylinderParticelContacts() {
             const double distance=cylinderI->dist(partJ->x0);
             // distance before contact
             const double overlap =rj-distance;
+            
+            // distance to point 1 of axis
+            const tVect p1dist = partJ->x0 - cylinderI->p1;
+            // same but projected on the axis
+            const tVect p1distax = (p1dist.dot(cylinderI->naxes)) * cylinderI->naxes;
+            // distance of point from cylinder axis
+            const tVect p1distcylinder = p1distax - p1dist;
+            tVect spring = cylinderI->p1 - p1distcylinder;
+            const string s = "c" + to_string(cylinderI->index) + ":p" + to_string(partJ->particleIndex);
+
+            Elongation elongation_here = elongTable[s];
+                       
             // check for contact
             if (overlap>0.0) {
-                cylinderParticleCollision(cylinderI,partJ,overlap);
+                cylinderParticleCollision(cylinderI,partJ,overlap, elongation_here);
+                elongation_here.p = spring;
+                elongTable[s] = elongation_here;
+            }else {
+                elongTable.erase(s);
             }
         }
     }
-}
+    
 
 void DEM::objectParticleContacts(IO& io) {
 
     // to keep conventions, the index i refers to the object, and j the particle
+for (objectList::iterator io = objects.begin(); io != objects.end(); io++) {
+        object *objectI = &*io;
 
-    for (unsIntList::iterator ip=nearObjectTable.begin(); ip!=nearObjectTable.end(); ip=ip+2) {
-        // couple of contact candidates
-        unsIntList::iterator iobj=ip+1;
-        // particle
+        for (unsIntList::iterator it = nearObjectTable[objectI->index].begin(); it != nearObjectTable[objectI->index].end(); it++) {
+            // particle
+        const particle *partJ = &particles[*it];
+
         const particle *partJ=&particles[*ip];
         // object
         object *objectI=&objects[*iobj];
@@ -1719,10 +1835,22 @@ void DEM::objectParticleContacts(IO& io) {
         const double distance=vectorDistance.norm();
         // distance before contact
         const double overlap=rj+objectI->r-distance;
+        
+        const string s = "o" + to_string(objectI->index) + ":p" + to_string(partJ->particleIndex);
+            tVect spring = objectI->x0 - vectorDistance / 2;
+
+            Elongation elongation_here = elongTable[s];
+            elongation_here.p = spring;
+            
         if (overlap>0.0){
-            objectParticleCollision(objectI,partJ,vectorDistance,io);
-        }
+            objectParticleCollision(objectI,partJ,vectorDistance,io,elongation_here);
+            elongation_here.p = spring;
+            elongTable[s] = elongation_here;
+        }else {
+                    elongTable.erase(s);
+                }
     }
+}
 }
 
 //void DEM::objectParticleContacts(IO& io) {
@@ -1754,7 +1882,7 @@ void DEM::objectParticleContacts(IO& io) {
 //    }
 //}
 
-inline void DEM::particleParticleCollision(const particle *partI, const particle *partJ, const tVect& vectorDistance, IO& io) {
+inline void DEM::particleParticleCollision(const particle *partI, const particle *partJ, const tVect& vectorDistance, IO& io,Elongation& elongation) {
 
     // pointers to elements
     elmt *elmtI=&elmts[partI->clusterIndex];
@@ -1815,47 +1943,67 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
             elmtJ->MParticle=elmtJ->MParticle+centerDistJ.cross(normalForce);
         }
     }
-    
+        
     // TANGENTIAL FORCE ///////////////////////////////////////////////////////////////////
 
     // angular velocities (global reference frame)
-    const tVect wI=elmtI->wpGlobal; //2.0*quat2vec( elmtI->qp1.multiply( elmtI->qp0.adjoint() ) );
-    const tVect wJ=elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
+    const tVect wI = elmtI->wpGlobal; //2.0*quat2vec( elmtI->qp1.multiply( elmtI->qp0.adjoint() ) );
+    const tVect wJ = elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
     // relative velocity at contact point
-    const tVect relVelContact=relVel-wI.cross(vecRadI)+wJ.cross(vecRadj);
+    const tVect relVelContact = relVel - wI.cross(vecRadI) + wJ.cross(vecRadj);
     // tangential component of relative velocity
-    const tVect tangRelVelContact=relVelContact-normalRelVel;
+    const tVect tangRelVelContact = relVelContact - normalRelVel;
     // norm of tangential velocity
-    const double normTangRelVelContact=tangRelVelContact.norm();
+    const double normTangRelVelContact = tangRelVelContact.norm();
     // checking if there is any tangential motion
-    if (normTangRelVelContact!=0.0) {
-        // tangential force
-        double normTangForce=tangentialContact(normTangRelVelContact, normNormalForce, effRad, effMass, sphereMat.frictionCoefPart);
-        // second local unit vector (tangential)
-        const tVect et=tangRelVelContact/normTangRelVelContact;
-        // vectorial tangential force
-        const tVect tangForce=normTangForce*et;
+    if (normTangRelVelContact != 0.0) {
+
+        const double elong_old_norm=elongation.e.norm();
+       
+   
+         double normElong = elongation.e.dot(en);
+         const tVect normalElong = en*normElong;
+      
+        elongation.e = elongation.e-normalElong;
+        
+        
+        if (elongation.e.norm()!=0){
+        const double scaling=elong_old_norm/elongation.e.norm();
+        elongation.e=elongation.e*scaling;
+        }
+        else{
+            const double scaling=0.0;
+            elongation.e=elongation.e*scaling;
+        }
+
+        tVect tangForce = FRtangentialContact(tangRelVelContact, normNormalForce, effMass, elongation, sphereMat.frictionCoefPart,
+                sphereMat.linearStiff, sphereMat.viscTang);
+        
+        
+
         // torque updating
-        if (partI->particleIndex<stdParticles) {
-            elmtI->MParticle=elmtI->MParticle+centerDistI.cross(tangForce);
-            elmtI->FParticle=elmtI->FParticle+tangForce;
+        if (partI->particleIndex < stdParticles) {
+            elmtI->MParticle = elmtI->MParticle + centerDistI.cross(tangForce);
+            elmtI->FSpringP = elmtI->FSpringP + tangForce;
+            elmtI->FParticle = elmtI->FParticle + tangForce;
+
         }
-        if (partJ->particleIndex<stdParticles) {
-            elmtJ->MParticle=elmtJ->MParticle-centerDistJ.cross(tangForce);
-            elmtJ->FParticle=elmtJ->FParticle-tangForce;
+        if (partJ->particleIndex < stdParticles) {
+            elmtJ->MParticle = elmtJ->MParticle - centerDistJ.cross(tangForce);
+            elmtJ->FSpringP = elmtJ->FSpringP - tangForce;
+            elmtJ->FParticle = elmtJ->FParticle - tangForce;
         }
-        // save particle-particle collision into statistics file
+
+// save particle-particle collision into statistics file
         saveStatPPcollision(io,partI,partJ,overlap,normNormalForce,en,normTangForce,et);
-    }
-    else {
-        //cout<<"normTangRelVelContact==0!!!"<<normTangRelVelContact<<endl;
-    }
-    
-    
+
+    } else {
+        //cout<<"normTangRelVelContact==0!!!"<<endl;
+    } 
     
 }
 
-inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const double& overlap, IO& io) {
+inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const double& overlap, IO& io, Elongation& elongation) {
 
    // pointers to element
     elmt *elmtJ=&elmts[partJ->clusterIndex];
@@ -1906,38 +2054,58 @@ inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const
     }
     
 
-    // TANGENTIAL FORCE ///////////////////////////////////////////////////////////////////
+// TANGENTIAL FORCE ///////////////////////////////////////////////////////////////////
 
     // angular velocities (global reference frame)
-    const tVect wJ=elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
+    const tVect wJ = elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
     // relative velocity at contact point
-    const tVect relVelContact=relVel+wJ.cross(vecRadJ);
+    const tVect relVelContact = relVel + wJ.cross(vecRadJ);
     // tangential component of relative velocity
-    const tVect tangRelVelContact=relVelContact-normalRelVel;
+    const tVect tangRelVelContact = relVelContact - normalRelVel;
     // norm of tangential velocity
-    const double normTangRelVelContact=tangRelVelContact.norm();
+    const double normTangRelVelContact = tangRelVelContact.norm();
+
 
     // checking if there is any tangential motion
-    if (normTangRelVelContact!=0.0) {
-        // tangential force
-        double normTangForce=tangentialContact(normTangRelVelContact, normNormalForce, radJ, elmtJ->m, sphereMat.frictionCoefWall);
-        // second local unit vector (tangential)
-        const tVect et=tangRelVelContact/tangRelVelContact.norm();
-        // vectorial tangential force
-        const tVect tangForce=normTangForce*et;
+    if (normTangRelVelContact != 0.0) {
 
+        
+        const double elong_old_norm=elongation.e.norm();
+
+         double normElong = elongation.e.dot(en);
+         const tVect normalElong = en*normElong;
+      
+        elongation.e = elongation.e-normalElong;
+        
+         if (elongation.e.norm()!=0){
+        const double scaling=elong_old_norm/elongation.e.norm();       
+        elongation.e=elongation.e*scaling;
+        }
+        else{
+            const double scaling=0.0;
+           
+            elongation.e=elongation.e*scaling;
+        }
+        
+         tVect tangForce = FRtangentialContact(tangRelVelContact, normNormalForce, elmtJ->m, elongation, sphereMat.frictionCoefWall,
+                sphereMat.linearStiff, sphereMat.viscTang);
+        
         // torque updating
-        elmtJ->MWall=elmtJ->MWall-centerDistJ.cross(tangForce);
+        elmtJ->MWall = elmtJ->MWall - centerDistJ.cross(tangForce);
         // force updating
-        elmtJ->FWall=elmtJ->FWall-tangForce;
-        wallI->FParticle = wallI->FParticle+tangForce;
-        // save wall-particle collision into statistics file
+        elmtJ->FSpringW = elmtJ->FSpringW - tangForce;
+        elmtJ->FWall = elmtJ->FWall - tangForce;
+
+        wallI->FParticle = wallI->FParticle + tangForce;
+                // save wall-particle collision into statistics file
         saveStatWPcollision(io, wallI, partJ, overlap, normNormalForce, en,normTangForce, et);
+
+    }
+
     }
     
-}
 
-inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *partJ, const double& overlap) {
+inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *partJ, const double& overlap, Elongation& elongation) {
 
    // pointers to element
     elmt *elmtJ=&elmts[partJ->clusterIndex];
@@ -1989,31 +2157,53 @@ inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *
     // TANGENTIAL FORCE ///////////////////////////////////////////////////////////////////
 
     // angular velocities (global reference frame)
-    const tVect wJ=elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
+    const tVect wJ = elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
     // relative velocity at contact point
-    const tVect relVelContact=relVel+wJ.cross(vecRadJ); // couldn't we just use elmtJ.w?
+    const tVect relVelContact = relVel + wJ.cross(vecRadJ); // couldn't we just use elmtJ.w?
     // tangential component of relative velocity
-    const tVect tangRelVelContact=relVelContact-normalRelVel;
+    const tVect tangRelVelContact = relVelContact - normalRelVel;
     // norm of tangential velocity
-    const double normTangRelVelContact=tangRelVelContact.norm();
+    const double normTangRelVelContact = tangRelVelContact.norm();
     // checking if there is any tangential motion
-    if (normTangRelVelContact!=0.0) {
-        // tangential force
-        double normTangForce=tangentialContact(normTangRelVelContact, normNormalForce, radJ, elmtJ->m, sphereMat.frictionCoefWall);
+    if (normTangRelVelContact != 0.0) {
+         const double elong_old_norm=elongation.e.norm();
+
+         double normElong = elongation.e.dot(en);
+         const tVect normalElong = en*normElong;
+      
+        elongation.e = elongation.e-normalElong;
+        
+         if (elongation.e.norm()!=0){
+        const double scaling=elong_old_norm/elongation.e.norm();       
+        elongation.e=elongation.e*scaling;
+        }
+        else{
+            const double scaling=0.0;
+           
+            elongation.e=elongation.e*scaling;
+        }
+        
+        
+
+        tVect tangForce = FRtangentialContact(tangRelVelContact, normNormalForce, elmtJ->m, elongation, sphereMat.frictionCoefWall,
+                sphereMat.linearStiff, sphereMat.viscTang);
+
+        /*// tangential force
+        double normTangForce = tangentialContact(normTangRelVelContact, normNormalForce, radJ, elmtJ->m, sphereMat.frictionCoefWall);
         // second local unit vector (tangential)
-        const tVect et=tangRelVelContact/tangRelVelContact.norm();
+        const tVect et = tangRelVelContact / tangRelVelContact.norm();
         // vectorial tangential force
-        const tVect tangForce=normTangForce*et;
+        const tVect tangForce = normTangForce*et;*/
 
         // torque updating
-        elmtJ->MWall=elmtJ->MWall-centerDistJ.cross(tangForce);
+        elmtJ->MWall = elmtJ->MWall - centerDistJ.cross(tangForce);
         // force updating
-        elmtJ->FWall=elmtJ->FWall-tangForce;
+        elmtJ->FWall = elmtJ->FWall - tangForce;
         //wallI->FParticle = wallI->FParticle+ftv;
     }
 }
 
-inline void DEM::objectParticleCollision(object *objectI, const particle *partJ, const tVect& vectorDistance, IO& io) {
+inline void DEM::objectParticleCollision(object *objectI, const particle *partJ, const tVect& vectorDistance, IO& io, Elongation& elongation) {
 
    // pointers to element
     elmt *elmtJ=&elmts[partJ->clusterIndex];
@@ -2062,31 +2252,49 @@ inline void DEM::objectParticleCollision(object *objectI, const particle *partJ,
         elmtJ->MWall=elmtJ->MWall+centerDistJ.cross(normalForce);
     }
     
-    // TANGENTIAL FORCE ///////////////////////////////////////////////////////////////////
+        // TANGENTIAL FORCE ///////////////////////////////////////////////////////////////////
 
     // angular velocities (global reference frame)
-    const tVect wJ=elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
+    const tVect wJ = elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
     // relative velocity at contact point
-    const tVect relVelContact=relVel+wJ.cross(vecRadJ);
+    const tVect relVelContact = relVel + wJ.cross(vecRadJ);
     // tangential component of relative velocity
-    const tVect tangRelVelContact=relVelContact-normalRelVel;
+    const tVect tangRelVelContact = relVelContact - normalRelVel;
     // norm of tangential velocity
-    const double normTangRelVelContact=tangRelVelContact.norm();
+    const double normTangRelVelContact = tangRelVelContact.norm();
     // checking if there is any tangential motion
-    if (normTangRelVelContact!=0.0) {
-        // tangential force
-        double normTangForce=tangentialContact(normTangRelVelContact, normNormalForce, radJ, elmtJ->m, sphereMat.frictionCoefPart);
-        // second local unit vector (tangential)
-        const tVect et=tangRelVelContact/tangRelVelContact.norm();
-        // vectorial tangential force
-        const tVect tangForce=normTangForce*et;
+    if (normTangRelVelContact != 0.0) {
+         const double elong_old_norm=elongation.e.norm();
+
+         double normElong = elongation.e.dot(en);
+         const tVect normalElong = en*normElong;
+      
+        elongation.e = elongation.e-normalElong;
+        
+         if (elongation.e.norm()!=0){
+        const double scaling=elong_old_norm/elongation.e.norm();       
+        elongation.e=elongation.e*scaling;
+        }
+        else{
+            const double scaling=0.0;
+           
+            elongation.e=elongation.e*scaling;
+        }
+
+
+        tVect tangForce = FRtangentialContact(tangRelVelContact, normNormalForce, elmtJ->m, elongation, sphereMat.frictionCoefWall,
+                sphereMat.linearStiff, sphereMat.viscTang);
+
+ 
 
         // torque updating
-        elmtJ->MWall=elmtJ->MWall-centerDistJ.cross(tangForce);
+        elmtJ->MWall = elmtJ->MWall - centerDistJ.cross(tangForce);
         // force updating
-        elmtJ->FWall=elmtJ->FWall-tangForce;
-        objectI->FParticle=objectI->FParticle+tangForce;
-        // save object-particle collision into statistics file
+        elmtJ->FWall = elmtJ->FWall - tangForce;
+        
+        elmtJ->FSpringW = elmtJ->FSpringW - tangForce;
+        objectI->force = objectI->force + tangForce;    
+           // save object-particle collision into statistics file
         saveStatOPcollision(io, objectI, partJ, overlap, normNormalForce, en, normTangForce, et);
     }
 }
@@ -2128,6 +2336,67 @@ double DEM::normalContact(const double& overlap, const double& vrelnnorm, const 
     return fn;
     
 }
+tVect DEM::FRtangentialContact(const tVect& tangRelVelContact, const double& fn,
+        const double& effMass, Elongation& elongation, const double& friction, const double& tangStiff, const double& viscTang) {
+    // tangential force
+    tVect fs = tVect(0.0, 0.0, 0.0);
+    // tangent stiffness -> not physically sound, static friction is actually missing
+    const double ks = tangStiff;
+    // maximum force due to static friction
+    const double fsMax = friction*fn;
+    const double fdMax = friction*0.8*fn;
+
+    // viscous force
+    const tVect viscousForce = 2.0 * viscTang * sqrt(effMass * ks) * tangRelVelContact;
+
+
+
+     tVect et=tVect (0.0,0.0,0.0);
+    if (tangRelVelContact.norm()!=0){
+    et = tangRelVelContact / tangRelVelContact.norm();
+    }
+ 
+  
+
+    const tVect F_control = elongation.e * ks + viscousForce;
+ 
+    const double F_control_norm = F_control.norm();
+
+    if (!elongation.sliping){
+    if (F_control_norm < fsMax) {
+        fs = F_control;
+        elongation.e = elongation.e + tangRelVelContact*deltat;
+       
+       }
+    else {
+        elongation.sliping=true;
+    }
+    }
+    
+    else{
+       
+        if(viscousForce.norm()>fdMax){
+            fs=fdMax*et;
+            
+            const tVect  f=fdMax*et-viscousForce;
+            elongation.e=f/ks;
+            
+            
+        }
+        else{
+            fs=F_control;
+            elongation.e = elongation.e + tangRelVelContact*deltat;
+            elongation.sliping=false;
+            
+            
+        }
+
+    }
+  
+
+    return fs;
+}
+
 
 double DEM::tangentialContact(const double& vreltNorm, const double& fn, const double& effRad, const double& effMass, const double& friction) const {
 
@@ -2176,6 +2445,81 @@ double DEM::tangentialContact(const double& vreltNorm, const double& fn, const d
     return fs;
 
 }
+void DEM::deleteParticleElongation() {
+   
+    for (unsIntList::iterator iti = neighborTable.begin(); iti != neighborTable.end(); iti = iti + 2) {
+        // couple of contact candidates
+        unsIntList::iterator itj = iti + 1;
+        // pointers to particles
+        const particle *parti = &particles[*iti];
+        const particle *partj = &particles[*itj];
+
+        string s;
+        if (parti->particleIndex>partj->particleIndex){
+        s = "p" + to_string(parti->particleIndex) + ":p" + to_string(partj->particleIndex);
+        }
+        else {
+        s = "p" + to_string(partj->particleIndex) + ":p" + to_string(parti->particleIndex);
+        }
+
+
+        // checking for overlap
+        const double ri = parti->r;
+        const double rj = partj->r;
+        const double sigij = ri + rj;
+        const double sigij2 = sigij*sigij;
+        const double lubij = ri + rj + cutOff;
+        const double lubij2 = lubij*lubij;
+        // distance between centers
+        const tVect vectorDistance = partj->x0 - parti->x0;
+        const double distance2 = vectorDistance.norm2();
+        tVect spring = parti->x0 + vectorDistance / 2;
+
+            // check for contact
+            if (distance2 > sigij2) {
+
+                //cout<<"coppie cancellate"<<s<<endl;
+
+                //unsigned int c=0;
+                
+                elongTable.erase(s); //before it was erased, but so the couple is eliminated in the map    
+                // apply lubrication force
+                //                lubrication(i, j, ri, rj, vectorDistance);
+                //cout<<"numero elementi  "<<c<<endl;
+            }
+        }
+    }
+    
+void DEM::deleteWallElongation() {
+     for (wallList::iterator ip = walls.begin(); ip != walls.end(); ip++) {
+        wall *wallI = &*ip;
+        //cout<<"muro n "<<wallI->index<<endl;
+        // cycling through particle in wall neighbor list
+        for (unsIntList::iterator it = nearWallTable[wallI->index].begin(); it != nearWallTable[wallI->index].end(); it++) {
+
+            // particle
+            const particle *partJ = &particles[*it];
+
+            //cout<<"particella n "<<partJ->particleIndex<<endl;
+            // radius
+            const double rj = partJ->r;
+            // distance from wall (norm)
+            const double distance = wallI->dist(partJ->x0);
+            
+            
+            const string s = "w" + to_string(wallI->index) + ":p" + to_string(partJ->particleIndex);
+
+          
+                // distance before contact
+                const double overlap = rj - distance;
+                if (overlap<=-cutOff) { 
+                        elongTable.erase(s);
+
+                    }
+                }
+            }
+        }
+    
 
 // energy functions
 

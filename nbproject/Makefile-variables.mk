@@ -15,13 +15,13 @@ CND_PACKAGE_DIR_Release=dist/Release/Cygwin-Windows/package
 CND_PACKAGE_NAME_Release=hybird.tar
 CND_PACKAGE_PATH_Release=dist/Release/Cygwin-Windows/package/hybird.tar
 # Debug configuration
-CND_PLATFORM_Debug=Cygwin-Windows
-CND_ARTIFACT_DIR_Debug=dist/Debug/Cygwin-Windows
+CND_PLATFORM_Debug=MinGW-Windows
+CND_ARTIFACT_DIR_Debug=dist/Debug/MinGW-Windows
 CND_ARTIFACT_NAME_Debug=hybird
-CND_ARTIFACT_PATH_Debug=dist/Debug/Cygwin-Windows/hybird
-CND_PACKAGE_DIR_Debug=dist/Debug/Cygwin-Windows/package
+CND_ARTIFACT_PATH_Debug=dist/Debug/MinGW-Windows/hybird
+CND_PACKAGE_DIR_Debug=dist/Debug/MinGW-Windows/package
 CND_PACKAGE_NAME_Debug=hybird.tar
-CND_PACKAGE_PATH_Debug=dist/Debug/Cygwin-Windows/package/hybird.tar
+CND_PACKAGE_PATH_Debug=dist/Debug/MinGW-Windows/package/hybird.tar
 #
 # include compiler specific variables
 #

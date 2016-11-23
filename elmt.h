@@ -94,8 +94,8 @@ public:
     // predicted angular velocity rates (global)
     tVect wp0,wp1,wp2,wp3,wp4,wp5;
     // force and moment
-    tVect FHydro,FParticle,FWall,FGrav;
-    tVect MHydro,MParticle,MWall;
+    tVect FHydro,FParticle,FWall,FGrav,FSpringP, FSpringW;
+    tVect MHydro,MParticle,MWall,MRolling;
     // fluid mass entrained by the particle
     double fluidVolume;
     // default constructor
@@ -119,9 +119,12 @@ public:
         FHydro=tVect(0.0,0.0,0.0);
         FWall=tVect(0.0,0.0,0.0);
         FParticle=tVect(0.0,0.0,0.0);
+        FSpringP=tVect(0.0,0.0,0.0);
+        FSpringW=tVect(0.0,0.0,0.0);
         MHydro=tVect(0.0,0.0,0.0);
         MParticle=tVect(0.0,0.0,0.0);
         MWall=tVect(0.0,0.0,0.0);
+        MRolling=tVect(0.0,0.0,0.0);
         components.resize(size);
         fluidVolume=0.0;
     }
@@ -214,6 +217,19 @@ public:
         x0=tVect(0.0,0.0,0.0);
         x1=tVect(0.0,0.0,0.0);
         FParticle=tVect(0.0,0.0,0.0);
+    }
+};
+
+class Elongation{
+public:
+    tVect e; //elongation vector
+    tVect p; //contact point between particles
+    bool sliping;
+    
+    Elongation() {
+        e=tVect (0.0,0.0,0.0);
+        p=tVect (0.0,0.0,0.0);
+        sliping=false;
     }
 };
 
