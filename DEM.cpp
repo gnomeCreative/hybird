@@ -2000,7 +2000,29 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
     } else {
         //cout<<"normTangRelVelContact==0!!!"<<endl;
     } 
+  //ROLLING
+    const double rolling_coeff=0.1;
+    const tVect wrel=wI-wJ;
+    const double wrel_norm=wrel.norm();
+    const double RIJ=(partI->r*partJ->r)/(partI->r+partJ->r);
+
+    tVect wIJ=tVect (0.0,0.0,0.0);
+    if (wrel_norm!=0){
+    wIJ=wrel/wrel_norm;
+    }
     
+    
+    const tVect rollingMoment=wIJ*rolling_coeff*normNormalForce*RIJ;
+    
+    
+    if (partI->particleIndex < stdParticles) {
+            elmtI->MRolling = elmtI->MRolling-rollingMoment;
+            
+        }
+    if (partJ->particleIndex < stdParticles) {
+         elmtJ->MRolling = elmtJ->MRolling+rollingMoment;
+        }
+       
 }
 
 inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const double& overlap, IO& io, Elongation& elongation) {
@@ -2101,10 +2123,26 @@ inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const
         //saveStatWPcollision(io, wallI, partJ, overlap, normNormalForce, en,normTangForce, et);
 
     }
+     //ROLLING
+    const double rolling_coeff=2*0.1;
+    const tVect wrel=-1.0*wJ;
+    const double wrel_norm=wrel.norm();
+    const double RIJ=(partJ->r);
+
+    tVect wIJ=tVect (0.0,0.0,0.0);
+    if (wrel_norm!=0){
+    wIJ=wrel/wrel_norm;
+    }
+
+    const tVect rollingMoment=wIJ*rolling_coeff*normNormalForce*RIJ;
+   
+    
+    if (partJ->particleIndex < stdParticles) {
+         elmtJ->MRolling = elmtJ->MRolling+rollingMoment;
+        }
 
     }
     
-
 inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *partJ, const double& overlap, Elongation& elongation) {
 
    // pointers to element
@@ -2201,6 +2239,23 @@ inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *
         elmtJ->FWall = elmtJ->FWall - tangForce;
         //wallI->FParticle = wallI->FParticle+ftv;
     }
+        //ROLLING
+    const double rolling_coeff=2*0.1;
+    const tVect wrel=-1.0*wJ;
+    const double wrel_norm=wrel.norm();
+    const double RIJ=(partJ->r);
+
+    tVect wIJ=tVect (0.0,0.0,0.0);
+    if (wrel_norm!=0){
+    wIJ=wrel/wrel_norm;
+    }
+
+    const tVect rollingMoment=wIJ*rolling_coeff*normNormalForce*RIJ;
+   
+    
+    if (partJ->particleIndex < stdParticles) {
+         elmtJ->MRolling = elmtJ->MRolling+rollingMoment;
+        }
 }
 
 inline void DEM::objectParticleCollision(object *objectI, const particle *partJ, const tVect& vectorDistance, IO& io, Elongation& elongation) {
@@ -2297,6 +2352,23 @@ inline void DEM::objectParticleCollision(object *objectI, const particle *partJ,
            // save object-particle collision into statistics file
         //saveStatOPcollision(io, objectI, partJ, overlap, normNormalForce, en, normTangForce, et);
     }
+     //ROLLING
+    const double rolling_coeff=2*0.1;
+    const tVect wrel=-1.0*wJ;
+    const double wrel_norm=wrel.norm();
+    const double RIJ=(partJ->r);
+
+    tVect wIJ=tVect (0.0,0.0,0.0);
+    if (wrel_norm!=0){
+    wIJ=wrel/wrel_norm;
+    }
+
+    const tVect rollingMoment=wIJ*rolling_coeff*normNormalForce*RIJ;
+   
+    
+    if (partJ->particleIndex < stdParticles) {
+         elmtJ->MRolling = elmtJ->MRolling+rollingMoment;
+        }
 }
 
 double DEM::normalContact(const double& overlap, const double& vrelnnorm, const double& effRad, const double& effMass) const {
