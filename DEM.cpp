@@ -1745,10 +1745,9 @@ void DEM::wallParticleContacts(IO& io) {
         // cycling through particle in wall neighbor list
         for (unsIntList::iterator it = nearWallTable[wallI->index].begin(); it != nearWallTable[wallI->index].end(); it++) {
 
-            // particle
-            const particle *partJ = &particles[*it];
+        // particle
+        const particle *partJ = &particles[*it];
 
-        const particle *partJ=&particles[*ip];
         // radius
         const double rj=partJ->r;
         // distance from wall (norm)
@@ -1781,9 +1780,12 @@ void DEM::cylinderParticelContacts() {
 // cycling through the cylinders
     for (cylinderList::iterator ip = cylinders.begin(); ip != cylinders.end(); ip++) {
         cylinder *cylinderI = &*ip;
+         // cycling through the cylinder neighbor particles
+        for (unsIntList::iterator it = nearCylinderTable[cylinderI->index].begin(); it != nearCylinderTable[cylinderI->index].end(); it++) {
 
             // particle
-            const particle *partJ=&particles[*it];
+            const particle *partJ = &particles[*it];
+
             // radius
             const double rj=partJ->r;
             // distance from wall (norm)
@@ -1812,21 +1814,19 @@ void DEM::cylinderParticelContacts() {
             }
         }
     }
+}
     
 
 void DEM::objectParticleContacts(IO& io) {
 
     // to keep conventions, the index i refers to the object, and j the particle
-for (objectList::iterator io = objects.begin(); io != objects.end(); io++) {
-        object *objectI = &*io;
+for (objectList::iterator iob = objects.begin(); iob != objects.end(); iob++) {
+        object *objectI = &*iob;
 
         for (unsIntList::iterator it = nearObjectTable[objectI->index].begin(); it != nearObjectTable[objectI->index].end(); it++) {
             // particle
         const particle *partJ = &particles[*it];
 
-        const particle *partJ=&particles[*ip];
-        // object
-        object *objectI=&objects[*iobj];
         // radius
         const double rj=partJ->r;
         // distance from object (vector)
@@ -1843,7 +1843,7 @@ for (objectList::iterator io = objects.begin(); io != objects.end(); io++) {
             elongation_here.p = spring;
             
         if (overlap>0.0){
-            objectParticleCollision(objectI,partJ,vectorDistance,io,elongation_here);
+            objectParticleCollision(objectI,partJ,vectorDistance, io,elongation_here);
             elongation_here.p = spring;
             elongTable[s] = elongation_here;
         }else {
@@ -1995,7 +1995,7 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
         }
 
 // save particle-particle collision into statistics file
-        saveStatPPcollision(io,partI,partJ,overlap,normNormalForce,en,normTangForce,et);
+        //saveStatPPcollision(io,partI,partJ,overlap,normNormalForce,en,normTangForce,et);
 
     } else {
         //cout<<"normTangRelVelContact==0!!!"<<endl;
@@ -2098,7 +2098,7 @@ inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const
 
         wallI->FParticle = wallI->FParticle + tangForce;
                 // save wall-particle collision into statistics file
-        saveStatWPcollision(io, wallI, partJ, overlap, normNormalForce, en,normTangForce, et);
+        //saveStatWPcollision(io, wallI, partJ, overlap, normNormalForce, en,normTangForce, et);
 
     }
 
@@ -2293,9 +2293,9 @@ inline void DEM::objectParticleCollision(object *objectI, const particle *partJ,
         elmtJ->FWall = elmtJ->FWall - tangForce;
         
         elmtJ->FSpringW = elmtJ->FSpringW - tangForce;
-        objectI->force = objectI->force + tangForce;    
+        objectI->FParticle = objectI->FParticle + tangForce;    
            // save object-particle collision into statistics file
-        saveStatOPcollision(io, objectI, partJ, overlap, normNormalForce, en, normTangForce, et);
+        //saveStatOPcollision(io, objectI, partJ, overlap, normNormalForce, en, normTangForce, et);
     }
 }
 
@@ -2468,8 +2468,6 @@ void DEM::deleteParticleElongation() {
         const double rj = partj->r;
         const double sigij = ri + rj;
         const double sigij2 = sigij*sigij;
-        const double lubij = ri + rj + cutOff;
-        const double lubij2 = lubij*lubij;
         // distance between centers
         const tVect vectorDistance = partj->x0 - parti->x0;
         const double distance2 = vectorDistance.norm2();
@@ -2512,7 +2510,7 @@ void DEM::deleteWallElongation() {
           
                 // distance before contact
                 const double overlap = rj - distance;
-                if (overlap<=-cutOff) { 
+                if (overlap<=0.0) { 
                         elongTable.erase(s);
 
                     }

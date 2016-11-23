@@ -183,14 +183,14 @@ private:
     
     inline void particleParticleCollision(const particle *partI, const particle *partJ, const tVect& vectorDistance, IO& io, Elongation& elongation);
     inline void wallParticleCollision(wall *walli, const particle *partJ, const double& overlap, IO& io, Elongation& elongation);
-    inline void cylinderParticleCollision(cylinder *cylinderI, const particle *partJ, const double& overlap, IO& io, Elongation& elongation);
+    inline void cylinderParticleCollision(cylinder *cylinderI, const particle *partJ, const double& overlap, Elongation& elongation);
     inline void objectParticleCollision(object *iObject, const particle *partJ, const tVect& vectorDistance, IO& io, Elongation& elongation);
     
     
     //inline void particleParticleCollision(const particle *partI, const particle *partJ, const tVect& vectorDistance, IO& io);
-    inline void wallParticleCollision(wall *walli, const particle *partJ, const double& overlap, IO& io);
-    inline void cylinderParticleCollision(cylinder *cylinderI, const particle *partJ, const double& overlap);
-    inline void objectParticleCollision(object *iObject, const particle *partJ, const tVect& vectorDistance, IO& io);
+    //inline void wallParticleCollision(wall *walli, const particle *partJ, const double& overlap, IO& io);
+    //inline void cylinderParticleCollision(cylinder *cylinderI, const particle *partJ, const double& overlap);
+    //inline void objectParticleCollision(object *iObject, const particle *partJ, const tVect& vectorDistance, IO& io);
     double normalContact(const double& overlap, const double& vrelnnorm, const double& rEff, const double& massEff) const;
     double tangentialContact(const double& vreltNorm, const double& fn, const double& effRad, const double& effMass, const double& friction) const;
     
