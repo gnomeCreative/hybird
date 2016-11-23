@@ -26,7 +26,6 @@
       </nativedebugger>
       <runprofile version="9">
         <runcommandpicklist>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -cs shellConfigNetcfg -cl lbmConfigBarrier.cfg -m halfNet.off -d ../results/barrier -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -cs shellConfigNet.cfg -cl lbmConfigBarrier.cfg -m halfNet.off -d ../results/barrier -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier.cfg -d ../results/barrier -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_4_2d_90_2.cfg -d ../results/maddalena -n time</runcommandpicklistitem>
@@ -36,8 +35,9 @@
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c configureDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c configureFileDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_1p.cfg -d ./results/barrier -n time</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommand>
+        <runcommand>"${OUTPUT_PATH}" -c lbmConfigBarrier_1p.cfg -d ./results/barrier -n time</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

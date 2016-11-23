@@ -97,6 +97,7 @@ void IO::initialize(){
     // build data file names 
     fluidFileFormat=fluidDirectory+"/fluid%010u.vti";
     partFileFormat=partDirectory+"/part%010u.vtu";
+    elongFileFormat=partDirectory+"/elong%010u.vtu";
     recycleFileFormat=partDirectory+"/recycle%010u.vtu";
     objectFileFormat=partDirectory+"/object%010u.vtu";
 
@@ -269,6 +270,8 @@ void IO::createParaviewFiles(const LB& lb, const DEM& dem) {
             lastPartExp=partExpCounter;
             sprintf(filePathBuffer, partFileFormat.c_str(), currentTimeStep);
             exportParaviewParticles(dem.elmts, dem.particles, filePathBuffer);
+            sprintf(filePathBuffer, elongFileFormat.c_str(), currentTimeStep);
+            exportParaviewElongations( dem.elongTable, filePathBuffer);
         }
         const unsigned int recycleExpCounter=(recycleExpTime>0 ? static_cast<unsigned int>(realTime/recycleExpTime)+1 : 0);
         if (recycleExpCounter>lastRecycleExp) {
@@ -358,6 +361,19 @@ void IO::exportParaviewParticles(const elmtList& elmts, const particleList& part
     for (int i=0; i<Pnumber; ++i){
         elmts[particles[i].clusterIndex].FHydro.printLine(paraviewParticleFile);
     }
+    paraviewParticleFile<<"    <DataArray type=\"Float64\" Name=\"FSpringP\" NumberOfComponents=\"3\"/>\n";
+    for (int i=0; i<Pnumber; ++i){
+        elmts[particles[i].clusterIndex].FSpringP.printLine(paraviewParticleFile);
+    }
+    paraviewParticleFile<<"    <DataArray type=\"Float64\" Name=\"FSpringW\" NumberOfComponents=\"3\"/>\n";
+    for (int i=0; i<Pnumber; ++i){
+        elmts[particles[i].clusterIndex].FSpringW.printLine(paraviewParticleFile);
+    }
+    
+        paraviewParticleFile<<"    <DataArray type=\"Float64\" Name=\"MRolling\" NumberOfComponents=\"3\"/>\n";
+    for (int i=0; i<Pnumber; ++i){
+        elmts[particles[i].clusterIndex].MRolling.printLine(paraviewParticleFile);
+    }
 //    paraviewParticleFile<<"    <DataArray type=\"Float64\" Name=\"MHydro\" NumberOfComponents=\"3\"/>\n";
 //    for (int i=0; i<Pnumber; ++i){
 //        elmts[particles[i].clusterIndex].MHydro.printLine(paraviewParticleFile);
@@ -417,6 +433,83 @@ void IO::exportParaviewParticles(const elmtList& elmts, const particleList& part
     paraviewParticleFile<<"</VTKFile>";
     // header file closing
     paraviewParticleFile.close();
+}
+
+void IO::exportParaviewElongations( const map<string, Elongation>& elongTable,const string& elongFile){
+     const int one = 1;
+    const int Pnumber = elongTable.size();
+
+    
+    // file opening
+    ofstream paraviewElongFile;
+    paraviewElongFile.open(elongFile.c_str());
+    //cout<<name<<endl;
+    // writing on header file
+    paraviewElongFile << "<?xml version=\"1.0\"?>\n";
+    paraviewElongFile << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\" compressor=\"vtkZLibDataCompressor\">\n";
+    paraviewElongFile << " <UnstructuredGrid GhostLevel=\"0\">\n";
+    paraviewElongFile << "  <Piece NumberOfPoints=\"" << Pnumber << "\" NumberOfCells=\"" << Pnumber << "\">\n";
+    paraviewElongFile << "   <PointData>\n";
+
+    paraviewElongFile << "    <DataArray type=\"Float64\" Name=\"Elongation\" NumberOfComponents=\"3\"/>\n";
+    
+    typedef map<string, Elongation>::iterator it;
+
+ //   for (it i = elongTable.begin(); i != elongTable.end();i++) {
+    
+   for (auto &i :  elongTable) {
+        i.second.e.printLine(paraviewElongFile);
+    }
+    paraviewElongFile<<"    <DataArray type=\"Float64\" Name=\"norm\"/>\n";
+    for (auto &i :  elongTable) {
+  
+         paraviewElongFile<<i.second.e.norm()<<"\n";
+    }
+    
+    /*paraviewElongFile<<"    <DataArray type=\"String\" Name=\"couple\"/>\n";
+    for (auto &i :  elongTable) {
+  
+         paraviewElongFile<<i.first<<"\n";
+    }*/
+
+paraviewElongFile << "   </PointData>\n";
+    paraviewElongFile << "   <CellData>\n";
+    paraviewElongFile << "   </CellData>\n";
+    paraviewElongFile << "   <Points>\n";
+    paraviewElongFile << "    <DataArray type=\"Float64\" Name=\"Points\" NumberOfComponents=\"3\"/>\n";
+    for (auto &i :  elongTable) {
+        i.second.p.printLine(paraviewElongFile);
+    }
+    
+    paraviewElongFile << "   </Points>\n";
+    paraviewElongFile << "   <Cells>\n";
+    paraviewElongFile << "    <DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n";
+    for (int i = 1; i < Pnumber + 1; ++i) {
+        paraviewElongFile << i - 1 << "\n";
+    }
+
+    paraviewElongFile << "    </DataArray>\n";
+    paraviewElongFile << "    <DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n";
+    for (int i = 1; i < Pnumber + 1; ++i) {
+        paraviewElongFile << i << "\n";
+    }
+
+    paraviewElongFile << "    </DataArray>\n";
+    paraviewElongFile << "    <DataArray type=\"Int64\" Name=\"types\" format=\"ascii\">\n";
+    for (int i = 0; i < Pnumber; ++i) {
+        paraviewElongFile << one << "\n";
+    }
+
+
+    paraviewElongFile << "    </DataArray>\n";
+    paraviewElongFile << "   </Cells>\n";
+    paraviewElongFile << "  </Piece>\n";
+    //    paraviewHeaderFile<<"  <Piece Source=\""<<pieceFile<<"\"/>\n";
+    paraviewElongFile << " </UnstructuredGrid>\n";
+    paraviewElongFile << "</VTKFile>";
+    // header file closing
+    paraviewElongFile.close();
+    
 }
 
 void IO::exportParaviewObjects(const objectList& objects, const string& objectFile){

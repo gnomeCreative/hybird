@@ -55,7 +55,7 @@ public:
     // support variables for output
     unsigned int lastScreenExp, lastFluidExp, lastPartExp, lastObjectExp, lastOutputExp, lastRecycleExp;
     // formats for output file names
-    string fluidFileFormat, partFileFormat, objectFileFormat, recycleFileFormat;
+    string fluidFileFormat, partFileFormat,elongFileFormat, objectFileFormat, recycleFileFormat;
     // support variable to store file names
     char filePathBuffer [1024];
     // boolean for exit control
@@ -124,6 +124,7 @@ private:
     // paraview
     void createParaviewFiles(const LB& lb, const DEM& dem);
     void exportParaviewParticles(const elmtList& elmts, const particleList& particles, const string& particleFile);
+    void exportParaviewElongations( const map<string, Elongation>& elongTable, const string& elongFile);
     void exportParaviewObjects(const objectList& particles, const string& objectFile);
     void exportParaviewBox(const double& time);
     void exportParaviewFluidOld(const LB& lb, const string& fluidFile);
