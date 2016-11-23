@@ -2,6 +2,7 @@
 #include "DEM.h"
 #include "IO.h"
 
+
 #define USE_MATH_DEFINES
 
 using namespace std;
@@ -124,7 +125,7 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
         elmts.push_back(dummyElmt);
         
     }
-
+    
     // objects initial state //////////////////////
     string objectFile;
     PARSE_CLASS_MEMBER(lbmCfgFile, objectFile, "objectFile","objects.dat");
