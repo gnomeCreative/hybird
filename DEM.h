@@ -48,8 +48,6 @@ private:
     unsIntList nearObjectTable;
     unsIntList nearCylinderTable;
     unsIntList newNearCylinderTable;
-    // capping distance to avoid infinite lubrication forces
-    double minDistLub;
     // numerical viscosity to avoid energy problems
     double numVisc;
     

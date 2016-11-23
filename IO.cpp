@@ -20,7 +20,7 @@ void IO::initialize(){
         a=mkdir(fluidDirectory.c_str(),0777);
         cout<<"Work directory created = "<<fluidDirectory<<". Result: "<<a<<"\n";
     }
-    
+
     
     //  initialising energy file
     energyFileName=workDirectory+"/energy.dat";

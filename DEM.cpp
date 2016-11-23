@@ -191,8 +191,6 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
     demSize[2]=double(lbSize[2])*unit.Length;
     // acceleration field
     demF=lbF*unit.Accel;
-    // capping distance for lubrication forces
-    minDistLub=0.01*unit.Length;
 
     // DEM time step
     // if multistep is 0, it should be calculated by the program here
@@ -317,7 +315,7 @@ void DEM::discreteElementStep(IO& io){
 	updateParticlesPredicted();
         
         // the statement below makes sure that .restart and .data are saved every multiple of saveCount
-        if (io.saveCount != 0 && io.currentTimeStep % io.saveCount == 0){  
+        if (io.saveCount!=0 && io.currentTimeStep % io.saveCount==0){  
         // export .data and .restart file
             exportDataFile(io);
             exportRestartFile(io);
@@ -325,9 +323,6 @@ void DEM::discreteElementStep(IO& io){
 	
 	// force evaluation
         evaluateForces(io);
-
-        // force evaluation (old version))
-        //evalForces();
 
         // corrector step
         corrector();
@@ -1477,9 +1472,10 @@ void DEM::evalNearCylinderTable() {
     nearCylinderTable.clear();
 
     for (int n=0; n<stdParticles; ++n) {
-        for (cylinderList::iterator ip=cylinders.begin(); ip!=cylinders.end(); ++ip) {
-            if (ip->dist(particles[n].x0) < nebrRange) {
+        for (int c=0; c<cylinders.size(); ++c) {
+            if (cylinders[c].dist(particles[n].x0) < nebrRange) {
                 nearCylinderTable.push_back(n);
+                nearCylinderTable.push_back(c);
                 break;
             }
         }
@@ -1678,22 +1674,25 @@ void DEM::cylinderParticelContacts() {
     // to keep conventions, the index i refers to the cylinder, and j the particle
 
     // cycling through the cylinders
-    for (cylinderList::iterator ip = cylinders.begin(); ip!=cylinders.end(); ip++) {
-        cylinder *cylinderI=&*ip;
+    //for (cylinderList::iterator ip = cylinders.begin(); ip!=cylinders.end(); ip++) {
+        //cylinder *cylinderI=&*ip;
         // cycling through the cylinder neighbor particles
-        for (unsIntList::iterator it = nearCylinderTable.begin(); it!=nearCylinderTable.end(); it++) {
-            // particle
-            const particle *partJ=&particles[*it];
-            // radius
-            const double rj=partJ->r;
-            // distance from wall (norm)
-            const double distance=cylinderI->dist(partJ->x0);
-            // distance before contact
-            const double overlap =rj-distance;
-            // check for contact
-            if (overlap>0.0) {
-                cylinderParticleCollision(cylinderI,partJ,overlap);
-            }
+    for (unsIntList::iterator ip = nearCylinderTable.begin(); ip!=nearCylinderTable.end(); ip=ip+2) {
+        // couple of contact candidates
+        unsIntList::iterator icyl=ip+1;
+        // particle
+        const particle *partJ=&particles[*ip];
+        // cylinder
+        cylinder *cylinderI=&cylinders[*icyl];
+        // radius
+        const double rj=partJ->r;
+        // distance from wall (norm)
+        const double distance=cylinderI->dist(partJ->x0);
+        // distance before contact
+        const double overlap =rj-distance;
+        // check for contact
+        if (overlap>0.0) {
+            cylinderParticleCollision(cylinderI,partJ,overlap);
         }
     }
 }
