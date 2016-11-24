@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+ <UnstructuredGrid GhostLevel="0">
+  <Piece NumberOfPoints="16" NumberOfCells="16">
+   <PointData>
+    <DataArray type="Float64" Name="Elongation" NumberOfComponents="3"/>
+-4.67679e-08 8.42706e-09 1.10389e-13
+4.90889e-08 -5.41894e-08 2.26025e-13
+5.99355e-08 -1.48269e-08 4.77844e-13
+-8.92797e-10 3.0712e-10 -6.69315e-16
+-6.02701e-08 3.6035e-05 2.58733e-05
+-2.94908e-05 1.75617e-05 -2.46433e-05
+3.06064e-05 1.84332e-05 -2.56478e-05
+-5.77537e-07 -1.11227e-07 4.77996e-11
+6.09405e-07 3.32843e-07 5.34848e-11
+4.33497e-07 2.51245e-07 8.04319e-11
+1.10062e-07 7.60437e-08 -1.47576e-11
+-2.58146e-07 -9.86741e-08 1.93398e-11
+1.33321e-07 4.40797e-08 1.15584e-12
+-4.56563e-07 0.000231502 0
+0.000201084 -0.00011589 0
+-0.000200903 -0.000115118 0
+    <DataArray type="Float64" Name="norm"/>
+4.75211e-08
+7.31178e-08
+6.17422e-08
+9.44145e-10
+4.43616e-05
+4.22542e-05
+4.39812e-05
+5.8815e-07
+6.94377e-07
+5.01042e-07
+1.33777e-07
+2.76362e-07
+1.40419e-07
+0.000231502
+0.000232088
+0.000231547
+   </PointData>
+   <CellData>
+   </CellData>
+   <Points>
+    <DataArray type="Float64" Name="Points" NumberOfComponents="3"/>
+2 2 1.59566
+2 2 1.79547
+2 2 1.99524
+2 2 3.39717
+1.99999 2.05821 0.218247
+2.05039 1.97091 0.218247
+1.94959 1.97091 0.218246
+1.99999 2.00002 0.398894
+1.99999 2.00003 0.598053
+1.99998 2 0.79734
+1.99998 1.99999 0.996932
+2 2 1.19652
+2 2 1.39596
+1.99999 2.11641 0.0996904
+2.10079 1.94181 0.0996908
+1.89919 1.9418 0.0996899
+   </Points>
+   <Cells>
+    <DataArray type="Int64" Name="connectivity" format="ascii">
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+    </DataArray>
+    <DataArray type="Int64" Name="offsets" format="ascii">
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+    </DataArray>
+    <DataArray type="Int64" Name="types" format="ascii">
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+    </DataArray>
+   </Cells>
+  </Piece>
+ </UnstructuredGrid>
+</VTKFile>

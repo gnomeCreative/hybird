@@ -1,0 +1,17 @@
+0; time=0	MaxPSpeed= 0	MaxPSpin= 0	eKin = 0	eGrav = 0	eTot = 0	
+101; time=0.0202	MaxPSpeed= 0.198131	MaxPSpin= 1.44247e-11	eKin = 0.822173	eGrav = 73.4823	eTot = 74.3045	
+201; time=0.0402	MaxPSpeed= 0.112664	MaxPSpin= 0.273002	eKin = 0.0924822	eGrav = 73.5133	eTot = 73.6058	
+301; time=0.0602	MaxPSpeed= 0.0835361	MaxPSpin= 0.00230868	eKin = 0.0777567	eGrav = 73.4004	eTot = 73.4782	
+400; time=0.08	MaxPSpeed= 0.0742166	MaxPSpin= 0.0914938	eKin = 0.0584907	eGrav = 73.1459	eTot = 73.2043	
+500; time=0.1	MaxPSpeed= 0.0335268	MaxPSpin= 0.0164433	eKin = 0.00601183	eGrav = 73.1844	eTot = 73.1904	
+600; time=0.12	MaxPSpeed= 0.00621879	MaxPSpin= 0.00101561	eKin = 0.000363307	eGrav = 73.1788	eTot = 73.1791	
+700; time=0.14	MaxPSpeed= 0.000610763	MaxPSpin= 0.00111369	eKin = 2.45664e-06	eGrav = 73.1805	eTot = 73.1805	
+800; time=0.16	MaxPSpeed= 0.00037196	MaxPSpin= 0.00104869	eKin = 2.17515e-06	eGrav = 73.182	eTot = 73.182	
+900; time=0.18	MaxPSpeed= 0.00030404	MaxPSpin= 0.00150718	eKin = 1.14308e-06	eGrav = 73.1827	eTot = 73.1827	
+1000; time=0.2	MaxPSpeed= 0.000153829	MaxPSpin= 0.00193742	eKin = 4.58691e-07	eGrav = 73.1828	eTot = 73.1828	
+1100; time=0.22	MaxPSpeed= 5.23128e-05	MaxPSpin= 0.000531065	eKin = 5.19902e-08	eGrav = 73.1828	eTot = 73.1828	
+1200; time=0.24	MaxPSpeed= 1.22842e-05	MaxPSpin= 0.000496665	eKin = 3.02316e-08	eGrav = 73.1828	eTot = 73.1828	
+1300; time=0.26	MaxPSpeed= 2.14766e-06	MaxPSpin= 0.0004633	eKin = 2.66868e-08	eGrav = 73.1828	eTot = 73.1828	
+1400; time=0.28	MaxPSpeed= 2.69394e-06	MaxPSpin= 0.000457747	eKin = 2.62357e-08	eGrav = 73.1828	eTot = 73.1828	
+1501; time=0.3002	MaxPSpeed= 2.37809e-06	MaxPSpin= 0.000458827	eKin = 2.62455e-08	eGrav = 73.1828	eTot = 73.1828	
+1601; time=0.3202	MaxPSpeed= 2.2833e-06	MaxPSpin= 0.000457816	eKin = 2.62083e-08	eGrav = 73.1828	eTot = 73.1828	

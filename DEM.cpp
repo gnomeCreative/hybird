@@ -306,7 +306,7 @@ void DEM::discreteElementStep(IO& io){
         evalMaxDisp();
         if (maxDisp>neighListTrigger) { // maxDisp>0.25*(nebrRange-2.0*cutOff)
             maxDisp=0.0;
-            //cout<<"new neighbor list"<<endl;
+            cout<<"new neighbor list"<<endl;
             evalNeighborTable();
         }
 
@@ -1700,15 +1700,22 @@ void DEM::particleParticleContacts(IO& io) {
         // couple of contact candidates
         unsIntList::iterator ipj = ipi + 1;
          // pointers to particles
-        const particle *parti=&particles[*ipi];
-        const particle *partj=&particles[*ipj];
+        //const particle *parti=&particles[*ipi];
+        //const particle *partj=&particles[*ipj];
+        
+        particle *parti=&particles[*ipi];
+        particle *partj=&particles[*ipj];
         
         string s;
         if (parti->particleIndex>partj->particleIndex){
         s = "p" + to_string(parti->particleIndex) + ":p" + to_string(partj->particleIndex);
+        particle *parti=&particles[*ipi];
+        particle *partj=&particles[*ipj];
         }
         else {
         s = "p" + to_string(partj->particleIndex) + ":p" + to_string(parti->particleIndex);
+        particle *partj=&particles[*ipi];
+        particle *parti=&particles[*ipj];
         }
         
         // checking for overlap

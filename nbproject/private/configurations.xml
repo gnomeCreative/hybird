@@ -26,18 +26,18 @@
       </nativedebugger>
       <runprofile version="9">
         <runcommandpicklist>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -cs shellConfigNet.cfg -cl lbmConfigBarrier.cfg -m halfNet.off -d ../results/barrier -n time</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier.cfg -d ../results/barrier -n time</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_4_2d_90_2.cfg -d ../results/maddalena -n time</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevis.cfg -d ../results/devis -n time</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevis.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c configureDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c configureFileDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_1p.cfg -d ./results/barrier -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_4p.cfg -d ./results/barrier -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_prova_3obj.cfg -d ./results/barrier -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_cube.cfg -d ./results/barrier -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_tramoggia_tappo_n.cfg -d ./results/barrier -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_colonna.cfg -d ./results/barrier -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_tramoggia_tappo_fila.cfg -d ./results/barrier -n time</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" -c lbmConfigBarrier_1p.cfg -d ./results/barrier -n time</runcommand>
+        <runcommand>"${OUTPUT_PATH}" -c lbmConfigBarrier_tramoggia_tappo_fila.cfg -d ./results/barrier -n time</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

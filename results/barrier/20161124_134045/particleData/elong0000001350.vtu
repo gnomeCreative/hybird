@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+ <UnstructuredGrid GhostLevel="0">
+  <Piece NumberOfPoints="15" NumberOfCells="15">
+   <PointData>
+    <DataArray type="Float64" Name="Elongation" NumberOfComponents="3"/>
+-2.08537e-07 7.73416e-08 9.51037e-12
+1.26301e-07 -9.70547e-08 -4.84921e-12
+-3.47612e-08 3.12729e-08 8.41608e-13
+2.39329e-06 -5.72575e-05 -4.18787e-05
+4.62724e-05 -2.6638e-05 3.90559e-05
+-3.38221e-05 -2.00194e-05 2.87399e-05
+-1.19326e-06 1.68604e-08 9.48492e-11
+8.19421e-07 -3.84816e-07 1.19085e-10
+5.66403e-07 -7.26492e-08 1.03692e-10
+-2.90916e-07 1.65634e-07 -5.64485e-12
+8.11964e-08 -9.82669e-09 -3.78785e-12
+1.28012e-07 -5.72702e-08 -6.60363e-12
+1.38449e-06 7.03497e-05 0
+5.94007e-05 -3.43736e-05 0
+-6.1535e-05 -3.70821e-05 0
+    <DataArray type="Float64" Name="norm"/>
+2.22418e-07
+1.59284e-07
+4.67582e-08
+7.09787e-05
+6.6152e-05
+4.86898e-05
+1.19338e-06
+9.05281e-07
+5.71043e-07
+3.34764e-07
+8.17889e-08
+1.40239e-07
+7.03633e-05
+6.86294e-05
+7.18446e-05
+   </PointData>
+   <CellData>
+   </CellData>
+   <Points>
+    <DataArray type="Float64" Name="Points" NumberOfComponents="3"/>
+1.99999 2 1.59253
+2 2 1.79208
+2.00001 2 1.99144
+2.00002 2.05889 0.217745
+2.05103 1.97055 0.217746
+1.94904 1.97057 0.217743
+2.00004 2.00002 0.397673
+2.00003 2.00004 0.596785
+1.99999 2.00002 0.795662
+1.99998 2.00001 0.994556
+1.99998 2.00002 1.19389
+1.99999 2.00001 1.39315
+2.00001 2.11777 0.0997357
+2.10203 1.9411 0.0997365
+1.89805 1.94113 0.0997314
+   </Points>
+   <Cells>
+    <DataArray type="Int64" Name="connectivity" format="ascii">
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+    </DataArray>
+    <DataArray type="Int64" Name="offsets" format="ascii">
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+    </DataArray>
+    <DataArray type="Int64" Name="types" format="ascii">
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+    </DataArray>
+   </Cells>
+  </Piece>
+ </UnstructuredGrid>
+</VTKFile>

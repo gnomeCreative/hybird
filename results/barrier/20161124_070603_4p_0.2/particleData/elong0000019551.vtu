@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+ <UnstructuredGrid GhostLevel="0">
+  <Piece NumberOfPoints="6" NumberOfCells="6">
+   <PointData>
+    <DataArray type="Float64" Name="Elongation" NumberOfComponents="3"/>
+-7.80017e-08 -1.96677e-05 -1.44203e-05
+-2.16865e-06 2.82473e-06 -2.40296e-06
+7.81763e-09 -1.15077e-09 -4.57788e-09
+-5.08586e-08 1.33103e-05 0
+1.53793e-05 -6.54832e-06 0
+-1.53191e-05 -6.74089e-06 0
+    <DataArray type="Float64" Name="norm"/>
+2.43879e-05
+4.29609e-06
+9.13217e-09
+1.33104e-05
+1.67154e-05
+1.67366e-05
+   </PointData>
+   <CellData>
+   </CellData>
+   <Points>
+    <DataArray type="Float64" Name="Points" NumberOfComponents="3"/>
+1.99999 2.05798 0.218059
+2.05148 1.9698 0.218061
+1.9485 1.96981 0.218061
+1.99999 2.1171 0.0999292
+2.10297 1.94074 0.0999327
+1.89701 1.94075 0.0999325
+   </Points>
+   <Cells>
+    <DataArray type="Int64" Name="connectivity" format="ascii">
+0
+1
+2
+3
+4
+5
+    </DataArray>
+    <DataArray type="Int64" Name="offsets" format="ascii">
+1
+2
+3
+4
+5
+6
+    </DataArray>
+    <DataArray type="Int64" Name="types" format="ascii">
+1
+1
+1
+1
+1
+1
+    </DataArray>
+   </Cells>
+  </Piece>
+ </UnstructuredGrid>
+</VTKFile>

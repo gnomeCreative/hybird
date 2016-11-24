@@ -1,0 +1,189 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+ <UnstructuredGrid GhostLevel="0">
+  <Piece NumberOfPoints="8" NumberOfCells="8">
+   <PointData>
+    <DataArray type="Float64" Name="radius"/>
+0.1
+0.1
+0.1
+0.1
+0.1
+0.1
+0.1
+0.1
+    <DataArray type="Float64" Name="mass"/>
+10.472
+10.472
+10.472
+10.472
+10.472
+10.472
+10.472
+10.472
+    <DataArray type="Float64" Name="particleIndex"/>
+0
+1
+2
+3
+4
+5
+6
+7
+    <DataArray type="Float64" Name="clusterIndex"/>
+0
+1
+2
+3
+4
+5
+6
+7
+    <DataArray type="Float64" Name="v" NumberOfComponents="3"/>
+0.00378792 -0.0029546 0
+0.00356652 -0.00227712 0
+-0.00122206 -0.00925796 0
+-0.00107205 -0.00607266 0
+-0.0035334 -0.00366459 0
+-0.00200507 -0.00725445 0
+-2.05581 -1.20673 0
+-0.00346371 -0.00387009 0
+    <DataArray type="Float64" Name="w" NumberOfComponents="3"/>
+0 0 -0.02582
+0 0 -0.0454041
+0 0 -0.000303413
+0 0 -0.00106855
+0 0 -0.0066692
+0 0 -0.00866123
+0 0 -12.4731
+0 0 -0.0225986
+    <DataArray type="Float64" Name="FParticle" NumberOfComponents="3"/>
+41.7974 -97.5405 0
+31.2441 -101.423 0
+-20.7584 68.2277 0
+-183.501 -21.2508 0
+15.4919 75.3112 0
+52.3185 49.493 0
+0 0 0
+63.4073 27.1828 0
+    <DataArray type="Float64" Name="FGrav" NumberOfComponents="3"/>
+-102.73 0 0
+-102.73 0 0
+-102.73 0 0
+-102.73 0 0
+-102.73 0 0
+-102.73 0 0
+-102.73 0 0
+-102.73 0 0
+    <DataArray type="Float64" Name="MParticle" NumberOfComponents="3"/>
+0 0 3.94115
+0 0 11.8127
+0 0 2.64224
+0 0 2.228
+0 0 10.2178
+0 0 5.32263
+0 0 0
+0 0 2.56216
+    <DataArray type="Float64" Name="FWall" NumberOfComponents="3"/>
+35.1826 70.0318 0
+-8.03465 108.917 0
+237.145 88.6036 0
+196.259 73.1663 0
+122.185 -70.6915 0
+51.4772 -29.8269 0
+0 0 0
+96.0858 -55.72 0
+    <DataArray type="Float64" Name="MWall" NumberOfComponents="3"/>
+0 0 -1.44732
+0 0 -7.24581
+0 0 -9.402
+0 0 -7.77891
+0 0 -5.24258
+0 0 -2.20955
+0 0 0
+0 0 -4.12515
+    <DataArray type="Float64" Name="FHydro" NumberOfComponents="3"/>
+0 0 0
+0 0 0
+0 0 0
+0 0 0
+0 0 0
+0 0 0
+0 0 0
+0 0 0
+    <DataArray type="Float64" Name="FSpringP" NumberOfComponents="3"/>
+-27.8695 -27.8668 0
+-30.6641 -24.7633 0
+110.826 52.6261 0
+-122.801 24.2877 0
+50.99 -4.76319 0
+1.39912 -1.40534 0
+0 0 0
+18.1192 -18.1152 0
+    <DataArray type="Float64" Name="FSpringW" NumberOfComponents="3"/>
+-11.5106 8.7738 0
+-57.6039 43.9541 0
+2.15668 93.9953 0
+1.84041 77.7673 0
+41.2294 32.3821 0
+17.3854 13.6367 0
+0 0 0
+32.467 25.4475 0
+    <DataArray type="Float64" Name="MRolling" NumberOfComponents="3"/>
+0 0 1.04785
+0 0 3.11088
+0 0 -6.3386
+0 0 -4.16795
+0 0 4.2337
+0 0 0.104256
+0 0 0
+0 0 2.38284
+   </PointData>
+   <CellData>
+   </CellData>
+   <Points>
+    <DataArray type="Float64" Name="Points" NumberOfComponents="3"/>
+4.47477 2.55548 0.7
+4.33343 2.69683 0.7
+4.19983 2.84541 0.7
+4.19985 3.04527 0.7
+4.26491 3.23419 0.7
+4.40625 3.37551 0.7
+4.44129 3.10461 0.7
+4.54761 3.5169 0.7
+   </Points>
+   <Cells>
+    <DataArray type="Int64" Name="connectivity" format="ascii">
+0
+1
+2
+3
+4
+5
+6
+7
+    </DataArray>
+    <DataArray type="Int64" Name="offsets" format="ascii">
+1
+2
+3
+4
+5
+6
+7
+8
+    </DataArray>
+    <DataArray type="Int64" Name="types" format="ascii">
+1
+1
+1
+1
+1
+1
+1
+1
+    </DataArray>
+   </Cells>
+  </Piece>
+ </UnstructuredGrid>
+</VTKFile>

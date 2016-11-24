@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+ <UnstructuredGrid GhostLevel="0">
+  <Piece NumberOfPoints="3" NumberOfCells="3">
+   <PointData>
+    <DataArray type="Float64" Name="radius"/>
+0.1
+0.1
+0.1
+    <DataArray type="Float64" Name="objectIndex"/>
+0
+1
+2
+    <DataArray type="Float64" Name="v" NumberOfComponents="3"/>
+0 0 0
+0 0 0
+0 0 0
+    <DataArray type="Float64" Name="Force" NumberOfComponents="3"/>
+4.1277e-13 75.8827 -164.624
+52.1525 -16.3281 -179.487
+-52.1525 -16.3281 -179.487
+   </PointData>
+   <CellData>
+   </CellData>
+   <Points>
+    <DataArray type="Float64" Name="Points" NumberOfComponents="3"/>
+2 2.11547 0.14
+2.1 1.94226 0.14
+1.9 1.94226 0.14
+   </Points>
+   <Cells>
+    <DataArray type="Int64" Name="connectivity" format="ascii">
+0
+1
+2
+    </DataArray>
+    <DataArray type="Int64" Name="offsets" format="ascii">
+1
+2
+3
+    </DataArray>
+    <DataArray type="Int64" Name="types" format="ascii">
+1
+1
+1
+    </DataArray>
+   </Cells>
+  </Piece>
+ </UnstructuredGrid>
+</VTKFile>

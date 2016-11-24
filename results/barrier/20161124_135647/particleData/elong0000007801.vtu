@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+ <UnstructuredGrid GhostLevel="0">
+  <Piece NumberOfPoints="16" NumberOfCells="16">
+   <PointData>
+    <DataArray type="Float64" Name="Elongation" NumberOfComponents="3"/>
+5.23439e-06 1.37099e-05 0
+2.25966e-06 -1.45017e-05 0
+5.19487e-06 1.37145e-05 0
+-1.15012e-05 9.11592e-06 0
+-4.01594e-08 -9.99613e-08 0
+-3.28237e-08 -1.02524e-07 0
+8.34872e-06 1.20707e-05 0
+-1.43464e-05 2.9795e-06 0
+-1.22084e-05 -8.06157e-06 0
+-1.38691e-05 4.79888e-06 0
+1.46673e-05 4.98067e-07 0
+-8.36636e-07 -1.46521e-05 0
+-1.43e-05 -3.30213e-06 0
+-1.20876e-05 8.30281e-06 0
+1.07884e-05 9.94947e-06 0
+1.14316e-05 9.20508e-06 0
+    <DataArray type="Float64" Name="norm"/>
+1.46751e-05
+1.46767e-05
+1.46654e-05
+1.46758e-05
+1.07727e-07
+1.0765e-07
+1.46766e-05
+1.46525e-05
+1.46299e-05
+1.46759e-05
+1.46757e-05
+1.46759e-05
+1.46763e-05
+1.46644e-05
+1.46759e-05
+1.4677e-05
+   </PointData>
+   <CellData>
+   </CellData>
+   <Points>
+    <DataArray type="Float64" Name="Points" NumberOfComponents="3"/>
+2.13029 2.56828 0.0999486
+2.22462 1.3177 0.0999486
+2.42383 2.89549 0.0999486
+1.22768 2.51766 0.0999486
+1.70292 1.76242 0.0999486
+2.14626 1.78418 0.0999486
+2.76441 2.65049 0.0999486
+1.57005 2.13672 0.0999486
+1.20987 1.57729 0.0999486
+1.87555 2.02948 0.0999486
+2.70182 2.06752 0.0999486
+1.83467 1.38522 0.0999486
+1.04108 1.72458 0.0999486
+1.10737 2.34742 0.0999486
+2.4162 2.29066 0.0999486
+3.06778 2.72765 0.0999486
+   </Points>
+   <Cells>
+    <DataArray type="Int64" Name="connectivity" format="ascii">
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+    </DataArray>
+    <DataArray type="Int64" Name="offsets" format="ascii">
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+    </DataArray>
+    <DataArray type="Int64" Name="types" format="ascii">
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+    </DataArray>
+   </Cells>
+  </Piece>
+ </UnstructuredGrid>
+</VTKFile>

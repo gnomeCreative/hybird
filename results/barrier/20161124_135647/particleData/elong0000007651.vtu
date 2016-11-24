@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+ <UnstructuredGrid GhostLevel="0">
+  <Piece NumberOfPoints="17" NumberOfCells="17">
+   <PointData>
+    <DataArray type="Float64" Name="Elongation" NumberOfComponents="3"/>
+5.23419e-06 1.37093e-05 0
+2.25966e-06 -1.45017e-05 0
+5.19396e-06 1.37121e-05 0
+-1.15011e-05 9.11578e-06 0
+-6.08462e-08 -1.04287e-07 0
+-3.2824e-08 -1.02524e-07 0
+8.34875e-06 1.20707e-05 0
+-1.36145e-05 3.15582e-06 0
+-1.44871e-05 3.0323e-06 0
+-1.2198e-05 -8.05471e-06 0
+-1.38691e-05 4.79887e-06 0
+1.46673e-05 4.98068e-07 0
+-8.36638e-07 -1.46521e-05 0
+-1.43e-05 -3.30213e-06 0
+-1.2084e-05 8.30035e-06 0
+1.07884e-05 9.9495e-06 0
+1.14316e-05 9.2051e-06 0
+    <DataArray type="Float64" Name="norm"/>
+1.46746e-05
+1.46767e-05
+1.46628e-05
+1.46755e-05
+1.20739e-07
+1.0765e-07
+1.46767e-05
+1.39754e-05
+1.48011e-05
+1.46174e-05
+1.46759e-05
+1.46758e-05
+1.4676e-05
+1.46763e-05
+1.46601e-05
+1.46759e-05
+1.4677e-05
+   </PointData>
+   <CellData>
+   </CellData>
+   <Points>
+    <DataArray type="Float64" Name="Points" NumberOfComponents="3"/>
+2.12471 2.55366 0.0999486
+2.2208 1.34225 0.0999486
+2.41293 2.86672 0.0999486
+1.24903 2.50074 0.0999486
+1.70293 1.76242 0.0999486
+2.14626 1.78418 0.0999486
+2.75223 2.63289 0.0999486
+1.61849 2.33389 0.0999486
+1.58263 2.13411 0.0999485
+1.23174 1.59173 0.0999486
+1.88034 2.02782 0.0999486
+2.70092 2.06749 0.0999486
+1.83498 1.39076 0.0999486
+1.05798 1.72848 0.0999486
+1.12393 2.33605 0.0999486
+2.41372 2.28837 0.0999486
+3.04234 2.70716 0.0999486
+   </Points>
+   <Cells>
+    <DataArray type="Int64" Name="connectivity" format="ascii">
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+    </DataArray>
+    <DataArray type="Int64" Name="offsets" format="ascii">
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+    </DataArray>
+    <DataArray type="Int64" Name="types" format="ascii">
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+    </DataArray>
+   </Cells>
+  </Piece>
+ </UnstructuredGrid>
+</VTKFile>
