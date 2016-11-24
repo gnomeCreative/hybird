@@ -2,8 +2,8 @@
 #include "LB.h"
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////////////
-// PUBLIC FUNCTIONS
-//////////////////////////////////////////////////////////////////////////////////////////////////////*/
+ // PUBLIC FUNCTIONS
+ //////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
 void LB::LBShow() const {
     cout<<"LATTICE CHARACTERISTICS (lattice units):\n";
@@ -42,7 +42,7 @@ void LB::LBShow() const {
 void LB::latticeDefinition() {
     // LATTICE PARAMETERS  ////////////////
     //size-dependent; the others are in the lattice.h
-
+    
     // domain movement variables
     shift[2]=lbSize[0]*lbSize[1];
     shift[1]=lbSize[0];
@@ -51,7 +51,7 @@ void LB::latticeDefinition() {
     domain[2]=lbSize[2]*lbSize[1]*lbSize[0]-2*shift[2];
     domain[1]=lbSize[1]*lbSize[0]-2*shift[1];
     domain[0]=lbSize[0]-2*shift[0];
-
+    
     // standard neighbors shifting
     // order is O,x,y,z,xy,yz,zx.
     ne[0]=0;
@@ -79,16 +79,16 @@ void LB::latticeDefinition() {
     ne[16]=-shift[2]-shift[0];
     ne[17]=-shift[2]+shift[0];
     ne[18]=shift[2]-shift[0];
-
+    
 }
 
 void LB::latticeBoltzmannGet(GetPot& lbmCfgFile, GetPot& command_line) {
-
+    
     // conversion units //////////////////////////////////////////////////////////////////////////////
     // fluid and granular matter are solved in different measure units
     // for a reference, check Feng, Han, Owen, 2007
     // measure units for DEM solver are in the international system
-
+    
     // primary
     PARSE_CLASS_MEMBER(lbmCfgFile, unit.Length, "unitLength",1.0);
     ASSERT(unit.Length > 0);
@@ -135,25 +135,25 @@ void LB::latticeBoltzmannGet(GetPot& lbmCfgFile, GetPot& command_line) {
     
     // compute all non-primary conversion units
     unit.setComposite();
-
+    
     // scaling viscosity
     initDynVisc/=unit.DynVisc;
     plasticVisc/=unit.DynVisc;
     yieldStress/=unit.Stress;
     
-//    PARSE_CLASS_MEMBER(lbmCfgFile, initDensity, "initDensity",1.0);
-//    initDensity/=unit.Density;
+    //    PARSE_CLASS_MEMBER(lbmCfgFile, initDensity, "initDensity",1.0);
+    //    initDensity/=unit.Density;
     // to avoid errors we set this to be just 1
     initDensity=1.0;
     ASSERT(initDensity > 0.0);
-
+    
     double initVelocityX, initVelocityY, initVelocityZ;
     PARSE_CLASS_MEMBER(lbmCfgFile, initVelocityX, "initVelocityX",0.0);
     PARSE_CLASS_MEMBER(lbmCfgFile, initVelocityY, "initVelocityY",0.0);
     PARSE_CLASS_MEMBER(lbmCfgFile, initVelocityZ, "initVelocityZ",0.0);
     initVelocity=tVect(initVelocityX, initVelocityY, initVelocityZ);
     initVelocity/=unit.Speed;
-
+    
     double lbFX, lbFY, lbFZ;
     PARSE_CLASS_MEMBER(lbmCfgFile, lbFX, "lbFX",0.0);
     PARSE_CLASS_MEMBER(lbmCfgFile, lbFY, "lbFY",0.0);
@@ -172,7 +172,7 @@ void LB::latticeBoltzmannGet(GetPot& lbmCfgFile, GetPot& command_line) {
             lbF/=unit.Accel;
         }
     }
-
+    
     boundary.resize(lbmDim);
     PARSE_CLASS_MEMBER(lbmCfgFile, boundary[0], "boundary0",1);
     PARSE_CLASS_MEMBER(lbmCfgFile, boundary[1], "boundary1",1);
@@ -180,17 +180,17 @@ void LB::latticeBoltzmannGet(GetPot& lbmCfgFile, GetPot& command_line) {
     PARSE_CLASS_MEMBER(lbmCfgFile, boundary[3], "boundary3",1);
     PARSE_CLASS_MEMBER(lbmCfgFile, boundary[4], "boundary4",1);
     PARSE_CLASS_MEMBER(lbmCfgFile, boundary[5], "boundary5",1);
-
+    
     PARSE_CLASS_MEMBER(lbmCfgFile, slipCoefficient, "slipCoefficient",0.0);
     ASSERT(slipCoefficient >= 0.0);
     PARSE_CLASS_MEMBER(lbmCfgFile, turbConst, "turbConst",0.0);
     ASSERT(turbConst >= 0.0);
-
+    
 }
 
 void LB::latticeBolzmannInit(cylinderList& cylinders, wallList& walls, particleList& particles, objectList& objects) {
     //  Lattice Boltzmann initialization steps
-
+    
     // first comes the initialization of the data structures
     initializeNodes();
     // then the initial node type must be identified for every node
@@ -252,7 +252,7 @@ void LB::latticeBoltzmannCouplingStep(bool& newNeighborList, elmtList& elmts, pa
     // 1) the first is to check for new active nodes and initialize them
     // 2) the second is checking for new solid nodes.
     // this automatically check also for the hideous case of particle to particle double transition
-
+    
     // first we check if a new neighbor table has been defined. In that case, the indexing needs to be reinitialized
     if (newNeighborList) {
         updateIndices(elmts, particles);
@@ -264,39 +264,39 @@ void LB::latticeBoltzmannCouplingStep(bool& newNeighborList, elmtList& elmts, pa
     newPopUpNodes.clear();
     newSolidNodes.clear();
     // double massSurplus=0.0;
-
+    
     // SOLID TO ACTIVE CHECK
     findNewActive(newPopUpNodes, elmts, particles);
-
-//    solidToActive(newPopUpNodes, elmts, massSurplus);
-
+    
+    //    solidToActive(newPopUpNodes, elmts, massSurplus);
+    
     // ACTIVE TO SOLID CHECK
     findNewSolid(newSolidNodes, elmts, particles);
-
-//    activeToSolid(newSolidNodes, elmts, massSurplus);
+    
+    //    activeToSolid(newSolidNodes, elmts, massSurplus);
     
     // redistributing extra mass due to popping of nodes
     // redistributeMass(massSurplus);
-
+    
 }
 
 void LB::accelerateDrum(double& drumSpeed, cylinderList& cylinders, wallList& walls) {
-
+    
     static double accelerationTime=0.5;
-
+    
     double currentTime=double(time)*unit.Time;
     if ((currentTime>=0.0)&&(currentTime<=accelerationTime)) {
-
+        
         double currentSpeed=std::max(drumSpeed*currentTime/accelerationTime,drumSpeed);
         cout<<"Current speed = "<<currentSpeed<<"\n";
-
+        
         // updating the geometrical elements (for DEM and coupling)
         // walls
         walls[2].omega=tVect(0.0,currentSpeed,0.0);
         walls[3].omega=tVect(0.0,currentSpeed,0.0);
         // drum
         cylinders[0].omega=tVect(0.0,currentSpeed,0.0);
-
+        
         // updating solid nodes velocity
         for (int n=0; n<totNodes; ++n) {
             if (types[n].isDynWall()||types[n].isSlipDynWall()||types[n].isCurvedWall()) {
@@ -317,13 +317,13 @@ void LB::accelerateDrum(double& drumSpeed, cylinderList& cylinders, wallList& wa
 }
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////////////
-// PRIVATE FUNCTIONS
-//////////////////////////////////////////////////////////////////////////////////////////////////////*/
+ // PRIVATE FUNCTIONS
+ //////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
 // initialization functions
 
 void LB::initializeTypes(particleList& particles, wallList& walls, cylinderList& cylinders, objectList& objects) {
-
+    
     // application of lattice boundaries
     initializeLatticeBoundaries();
     // application of particle initial position
@@ -341,9 +341,9 @@ void LB::initializeTypes(particleList& particles, wallList& walls, cylinderList&
 }
 
 void LB::initializeNodes() {
-
+    
     cout<<"Initializing nodes"<<endl;
-
+    
     // total number of nodes
     totNodes=lbSize[0]*lbSize[1]*lbSize[2];
     // vector with node pointers
@@ -369,29 +369,29 @@ void LB::initializeNodes() {
 }
 
 void LB::initializeLatticeBoundaries() {
-     // assign boundary characteristic to nodes (see class)
+    // assign boundary characteristic to nodes (see class)
     // if not differently defined, type is 0 (fluid)
-
+    
     // NEIGHBORING ////////////////////////////////////////////////
     // assigning neighboring conditions (this needs to be done after applying boundary conditions)
     cout<<"Initializing neighbors"<<endl;
     neighbors.resize(totNodes);
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int it=0; it<totNodes; ++it) {
         // runs through free cells and identifies neighboring cells. If neighbor cell is
         // a special cell (periodic) then the proper neighboring condition is applied
-
+        
         // resetting neighbors and vectors
         for (int j=1; j<lbmDirec; ++j) {
             neighbors[it].d[j]=it+ne[j];
         }
     }
-
+    
     // BOUNDARY CONDITIONS ///////////////////////////
     // solid boundary wins over all in corners, where more than 1 bc is defined
     // nodes on the boundary have no neighbors
     cout<<"Initializing boundaries"<<endl;
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int it=0; it<totNodes; ++it) {
         if (getX(it)==0 && !types[it].isWall()) {
             types[it].setType(boundary[0]);
@@ -416,7 +416,7 @@ void LB::initializeLatticeBoundaries() {
             for (int j=0; j<lbmDirec; ++j) {
                 neighbors[it].d[j]=it;
             }
-
+            
         }
         if (getZ(it)==0 && !types[it].isWall()) {
             types[it].setType(boundary[4]);
@@ -431,21 +431,21 @@ void LB::initializeLatticeBoundaries() {
             }
         }
     }
-
+    
     // PERIODICITY ////////////////////////////////////////////////
     // assigning periodicity conditions (this needs to be done after applying boundary conditions)
     cout<<"Initializing periodicity"<<endl;
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int it=0; it<totNodes; ++it) {
         // runs through free cells and identifies neighboring cells. If neighbor cell is
         // a special cell (periodic) then the proper neighboring condition is applied
-
+        
         // neighboring and periodicity vector for boundary update
         int pbc[lbmDirec];
         for (int j=1; j<lbmDirec; ++j) {
             pbc[j]=0;
         }
-
+        
         // calculates the effect of periodicity
         if (types[it].isFluid()) {
             tVect vx(1.0,0.0,0.0);
@@ -474,10 +474,10 @@ void LB::initializeLatticeBoundaries() {
 }
 
 void LB::initializeParticleBoundaries(particleList& particles) {
-
+    
     // INITIAL PARTICLE POSITION ////////////////////////
     cout<<"Initializing particle nodes"<<endl;
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int it=0; it<totNodes; ++it) {
         // checking if we are not in a boundary
         // whose properties have already been assigned and must be invariant in time
@@ -494,7 +494,7 @@ void LB::initializeParticleBoundaries(particleList& particles) {
 }
 
 void LB::initializeWallBoundaries(wallList& walls) {
-
+    
     // SOLID WALLS ////////////////////////
     cout<<"Initializing solid walls"<<endl;
     for (int iw=0; iw<walls.size(); ++iw) {
@@ -532,24 +532,24 @@ void LB::initializeWallBoundaries(wallList& walls) {
 }
 
 void LB::initializeObjectBoundaries(objectList& objects) {
-
+    
     // SOLID WALLS ////////////////////////
     cout<<"Initializing objects"<<endl;
     for (int io=0; io<objects.size(); ++io) {
         object dummyObject;
         dummyObject=objects[io];
-            for (int it=0; it<totNodes; ++it)  {
-                         const tVect nodePosition=positions[it];
-                         if (nodePosition.insideSphere(dummyObject.x0/unit.Length,dummyObject.r/unit.Length)) {// setting solidIndex
-                    types[it].setSolidIndex(dummyObject.index);
-                             types[it].setStatWall();
+        for (int it=0; it<totNodes; ++it)  {
+            const tVect nodePosition=positions[it];
+            if (nodePosition.insideSphere(dummyObject.x0/unit.Length,dummyObject.r/unit.Length)) {// setting solidIndex
+                types[it].setSolidIndex(dummyObject.index);
+                types[it].setStatWall();
+            }
         }
     }
 }
-}
 
 void LB::initializeCylinderBoundaries(cylinderList& cylinders) {
-
+    
     // SOLID CYLINDERS ////////////////////////
     cout<<"Initializing solid cylinders"<<endl;
     for (int ic=0; ic<cylinders.size(); ++ic) {
@@ -604,9 +604,9 @@ void LB::initializeCurved(cylinderList& cylinders) {
 void LB::initializeInterface(double totParticles) {
     // creates an interface electing interface cells from active cells
     // defining a surface
-
+    
     cout<<"Initializing interface"<<endl;
-
+    
     switch (problemName) {
         case demChute: {
             // PLANE
@@ -748,20 +748,20 @@ void LB::initializeInterface(double totParticles) {
                     }
                 }
             }
-//            // liquid veil
-//            cylinder dummyCylinder;
-//            dummyCylinder.p1=tVect(0.0 + 0.4,0.0,1.26);
-//            dummyCylinder.p2=tVect(0.0 + 0.4,1.0,1.26);
-//            dummyCylinder.R=1.229;
-//            dummyCylinder.initAxes();
-//            for (int it=0; it<totNodes; ++it) {
-//                if (types[it].isFluid()) {
-//                    // creating gas cells
-//                    if (getPosition(it).insideCylinder(dummyCylinder.p1/unit.Length, dummyCylinder.naxes, dummyCylinder.R/unit.Length)) {
-//                        types[it].setGas();
-//                    }
-//                }
-//            }
+            //            // liquid veil
+            //            cylinder dummyCylinder;
+            //            dummyCylinder.p1=tVect(0.0 + 0.4,0.0,1.26);
+            //            dummyCylinder.p2=tVect(0.0 + 0.4,1.0,1.26);
+            //            dummyCylinder.R=1.229;
+            //            dummyCylinder.initAxes();
+            //            for (int it=0; it<totNodes; ++it) {
+            //                if (types[it].isFluid()) {
+            //                    // creating gas cells
+            //                    if (getPosition(it).insideCylinder(dummyCylinder.p1/unit.Length, dummyCylinder.naxes, dummyCylinder.R/unit.Length)) {
+            //                        types[it].setGas();
+            //                    }
+            //                }
+            //            }
             break;
         }
         case DIFF: {
@@ -781,8 +781,8 @@ void LB::initializeInterface(double totParticles) {
             break;
         }
     }
-
-
+    
+    
     // checking for boundary between gas and fluid and assigning interface properties
     for (int it=0; it<totNodes; ++it) {
         if (types[it].isFluid()) {
@@ -794,7 +794,7 @@ void LB::initializeInterface(double totParticles) {
             }
         }
     }
-
+    
     // eliminating isolated interface nodes
     for (int it=0; it<totNodes; ++it) {
         if (types[it].isInterface()) {
@@ -814,41 +814,41 @@ void LB::initializeInterface(double totParticles) {
 }
 
 void LB::initializeLists() {
-
+    
     cout<<"Initializing lists"<<endl;
-
+    
     // note that interface is not defined here. All fluid, interface and gas cells are 0 at the moment
     fluidNodes.clear();
     particleNodes.clear();
     interfaceNodes.clear();
-
-/*    // position in space with pressure equal to import initial value
-//    tVect p0((double)lbSize[0], (double)lbSize[1], (double)lbSize[2]);
-//    #pragma omp parallel for ordered
-//    for (int z=0; z<lbSize[2]; ++z) {
-//        for (int y=0; y<lbSize[1]; ++y) {
-//            for (int x=0; x<lbSize[0]; ++x) {
-//                // vectorized position
-//                tVect p((double)(x), (double)(y), (double)(z));
-//                // distance from p0
-//                tVect deltah=p-p0;
-//                // depth increase for hydrostatic pressure computation
-//                double density=initDensity;//+3.0*dt*dt*initDensity*deltah.dot(lbF);
-//                double mass=density;
-//                double viscosity=initVisc;
-//                // velocity profile
-//                tVect velocity=initVelocity;
-//                // position variables
-//                node dummyNode;
-//
-//
-//                //          initializeNode(dummyNode, density, velocity, mass, viscosity);
-//                #pragma omp ordered
-//                nodes[index]=dummyNode;
-//                //          nodes.push_back(dummyNode);
-//            }
-//        }
-//    } */
+    
+    /*    // position in space with pressure equal to import initial value
+     //    tVect p0((double)lbSize[0], (double)lbSize[1], (double)lbSize[2]);
+     //    #pragma omp parallel for ordered
+     //    for (int z=0; z<lbSize[2]; ++z) {
+     //        for (int y=0; y<lbSize[1]; ++y) {
+     //            for (int x=0; x<lbSize[0]; ++x) {
+     //                // vectorized position
+     //                tVect p((double)(x), (double)(y), (double)(z));
+     //                // distance from p0
+     //                tVect deltah=p-p0;
+     //                // depth increase for hydrostatic pressure computation
+     //                double density=initDensity;//+3.0*dt*dt*initDensity*deltah.dot(lbF);
+     //                double mass=density;
+     //                double viscosity=initVisc;
+     //                // velocity profile
+     //                tVect velocity=initVelocity;
+     //                // position variables
+     //                node dummyNode;
+     //
+     //
+     //                //          initializeNode(dummyNode, density, velocity, mass, viscosity);
+     //                #pragma omp ordered
+     //                nodes[index]=dummyNode;
+     //                //          nodes.push_back(dummyNode);
+     //            }
+     //        }
+     //    } */
     // creating list and initialize macroscopic variables for all nodes except walls
     for (int it=0; it<totNodes; ++it) {
         // FLUID NODES ////
@@ -871,19 +871,19 @@ void LB::initializeLists() {
             particleNodes.push_back(it);
         }
     }
-
+    
 }
 
 void LB::resetLists() {
-
+    
     cout<<"Resetting lists"<<endl;
-
+    
     // note that interface is not defined here. All fluid, interface and gas cells are 0 at the moment
     fluidNodes.clear();
     particleNodes.clear();
     interfaceNodes.clear();
-
-
+    
+    
     // creating list and initialize macroscopic variables for all nodes except walls
     for (int it=0; it<totNodes; ++it) {
         // FLUID NODES ////
@@ -902,11 +902,11 @@ void LB::resetLists() {
             particleNodes.push_back(it);
         }
     }
-
+    
 }
 
 void LB::initializeVariables() {
-
+    
     cout<<"Initializing variables"<<endl;
     // note that interface is not defined here. All fluid, interface and gas cells are 0 at the moment
     //fluidNodes.clear();
@@ -926,7 +926,7 @@ void LB::initializeVariables() {
     for (int it=0; it<totNodes; ++it) {
         // FLUID NODES ////
         if (types[it].isFluid()) {
-
+            
             // setting macroscopic variables
             // density is calculated using hydrostatic profile
             tVect deltah=positions[it]-maxP;
@@ -946,8 +946,8 @@ void LB::initializeVariables() {
 void LB::initializeWalls(wallList& walls, cylinderList& cylinders, objectList& objects) {
     cout<<"Initializing wall nodes"<<endl;
     double zero=0.0;
-
-      // initializing wall nodes
+    
+    // initializing wall nodes
     // notice that, in the hypothesis that these walls are not evolving, only nodes at the interface need creation
     for (int it=0; it<totNodes; ++it) {
         if (!types[it].isWall()) {
@@ -999,58 +999,58 @@ void LB::initializeWalls(wallList& walls, cylinderList& cylinders, objectList& o
 
 void LB::cleanLists() {
     // sorts the active-node list and removes duplicates
-
+    
     std::sort (fluidNodes.begin(), fluidNodes.end());
     std::sort (interfaceNodes.begin(), interfaceNodes.end());
     std::sort (particleNodes.begin(), particleNodes.end());
-
+    
     for (int ind=fluidNodes.size()-1; ind>0; --ind) {
         const unsigned int i=fluidNodes[ind];
         const unsigned int j=fluidNodes[ind-1];
         if (i==j) {
             cout<<"duplicate-fluid!"<<endl;
-           fluidNodes.erase(fluidNodes.begin()+ind);
-       }
+            fluidNodes.erase(fluidNodes.begin()+ind);
+        }
     }
     for (int ind=interfaceNodes.size()-1; ind>0; --ind) {
         const unsigned int i=interfaceNodes[ind];
         const unsigned int j=interfaceNodes[ind-1];
         if (i==j) {
             cout<<"duplicate-interface!"<<endl;
-           interfaceNodes.erase(interfaceNodes.begin()+ind);
-       }
+            interfaceNodes.erase(interfaceNodes.begin()+ind);
+        }
     }
     for (int ind=particleNodes.size()-1; ind>0; --ind) {
         const unsigned int i=particleNodes[ind];
         const unsigned int j=particleNodes[ind-1];
         if (i==j) {
             cout<<"duplicate-interface!"<<endl;
-           particleNodes.erase(particleNodes.begin()+ind);
-       }
+            particleNodes.erase(particleNodes.begin()+ind);
+        }
     }
-
+    
     // list with active nodes i.e. nodes where collision and streaming are solved
     // solid nodes, particle nodes and gas nodes are excluded
     activeNodes.clear();
     activeNodes.reserve(fluidNodes.size()+interfaceNodes.size());
     activeNodes.insert(activeNodes.end(), fluidNodes.begin(), fluidNodes.end());
     activeNodes.insert(activeNodes.end(), interfaceNodes.begin(), interfaceNodes.end());
-
+    
     std::sort (activeNodes.begin(), activeNodes.end());
-
+    
     for (int ind=activeNodes.size()-1; ind>0; --ind) {
-       unsigned int i=activeNodes[ind];
-       unsigned int j=activeNodes[ind-1];
-       if (types[i].isGas()) {
-           activeNodes.erase(activeNodes.begin()+ind);
-           cout<<"wrong-gas!"<<endl;
-       }
-       else if (i==j) {
-           activeNodes.erase(activeNodes.begin()+ind);
-           cout<<"duplicate-active!"<<endl;
-       }
+        unsigned int i=activeNodes[ind];
+        unsigned int j=activeNodes[ind-1];
+        if (types[i].isGas()) {
+            activeNodes.erase(activeNodes.begin()+ind);
+            cout<<"wrong-gas!"<<endl;
+        }
+        else if (i==j) {
+            activeNodes.erase(activeNodes.begin()+ind);
+            cout<<"duplicate-active!"<<endl;
+        }
     }
-
+    
     for (int it=0; it<activeNodes.size(); ++it) {
         if (types[activeNodes[it]].isGas()) {
             cout<<"GAS ERROR"<<endl;
@@ -1062,35 +1062,35 @@ void LB::cleanLists() {
 void LB::reconstruction() {
     // reconstruction of macroscopic variables from microscopic distribution
     // this step is necessary to proceed to the collision step
-
-    #pragma omp parallel for
+    
+#pragma omp parallel for
     for (int it=0; it<activeNodes.size(); ++it) {
         nodes[activeNodes[it]]->reconstruct();
     }
 }
 
 void LB::collision() {
-
+    
     if (!forceField) {
         lbF.reset();
     }
-
-//    const double amplitude=lbF.norm();
-
-    #pragma omp parallel for
+    
+    //    const double amplitude=lbF.norm();
+    
+#pragma omp parallel for
     for (int it=0; it<activeNodes.size(); ++it) {
-//        tVect forceField=lbF;
-//        switch (problemName) {
-//            case DRUM: {
-//                if (getX(it)>0.9*lbSize[0]) {
-////                    forceField=lbF+Xm*2.0*amplitude;
-////                    cout<<endl;
-////                    lbF.show();
-////                    forceField.show();
-//                }
-//                break;
-//            }
-//        }
+        //        tVect forceField=lbF;
+        //        switch (problemName) {
+        //            case DRUM: {
+        //                if (getX(it)>0.9*lbSize[0]) {
+        ////                    forceField=lbF+Xm*2.0*amplitude;
+        ////                    cout<<endl;
+        ////                    lbF.show();
+        ////                    forceField.show();
+        //                }
+        //                break;
+        //            }
+        //        }
         const unsigned int index=activeNodes[it];
         // equilibrium distributions
         double feq[lbmDirec];
@@ -1098,9 +1098,9 @@ void LB::collision() {
         nodes[index]->shiftVelocity(lbF);
         // compute equilibrium distributions
         nodes[index]->computeEquilibrium(feq);
-//        if (types[index].isInsideParticle()) {
-//            nodes[index]->resetViscosity(initDynVisc);
-//        }
+        //        if (types[index].isInsideParticle()) {
+        //            nodes[index]->resetViscosity(initDynVisc);
+        //        }
         if (nonNewtonian || turbulenceOn) {
             // compute shear rate tensor, find invariant calculate viscosity (Bingham)
             nodes[index]->computeShearRate(feq, turbConst, plasticVisc, yieldStress,nonNewtonian,turbulenceOn);
@@ -1110,35 +1110,35 @@ void LB::collision() {
         // add force term to new distributions
         nodes[index]->addForce(lbF);
     }
-       
-
-//    if (!forceField && !nonNewtonian) {
-//        #pragma omp parallel for
-//        for (int it=0; it<activeNodes.size(); ++it) {
-//            nodes[activeNodes[it]]->collide(initDynVisc);
-//        }
-//    }
-//
-//    if (forceField && !nonNewtonian) {
-////        #pragma omp parallel for
-//        for (int it=0; it<activeNodes.size(); ++it) {
-//            nodes[activeNodes[it]]->collideF(lbF, initDynVisc);
-//        }
-//    }
-//
-//    if (!forceField && nonNewtonian) {
-//        #pragma omp parallel for
-//        for (int it=0; it<activeNodes.size(); ++it) {
-//            nodes[activeNodes[it]]->collideNN(turbConst, plasticVisc, yieldStress);
-//        }
-//    }
-//
-//    if (forceField && nonNewtonian) {
-//        #pragma omp parallel for
-//        for (int it=0; it<activeNodes.size(); ++it) {
-//            nodes[activeNodes[it]]->collideFNN(turbConst, lbF, plasticVisc, yieldStress);
-//        }
-//    }
+    
+    
+    //    if (!forceField && !nonNewtonian) {
+    //        #pragma omp parallel for
+    //        for (int it=0; it<activeNodes.size(); ++it) {
+    //            nodes[activeNodes[it]]->collide(initDynVisc);
+    //        }
+    //    }
+    //
+    //    if (forceField && !nonNewtonian) {
+    ////        #pragma omp parallel for
+    //        for (int it=0; it<activeNodes.size(); ++it) {
+    //            nodes[activeNodes[it]]->collideF(lbF, initDynVisc);
+    //        }
+    //    }
+    //
+    //    if (!forceField && nonNewtonian) {
+    //        #pragma omp parallel for
+    //        for (int it=0; it<activeNodes.size(); ++it) {
+    //            nodes[activeNodes[it]]->collideNN(turbConst, plasticVisc, yieldStress);
+    //        }
+    //    }
+    //
+    //    if (forceField && nonNewtonian) {
+    //        #pragma omp parallel for
+    //        for (int it=0; it<activeNodes.size(); ++it) {
+    //            nodes[activeNodes[it]]->collideFNN(turbConst, lbF, plasticVisc, yieldStress);
+    //        }
+    //    }
 }
 
 void LB::streaming(elmtList& elmts, particleList& particles, wallList& walls) {
@@ -1162,210 +1162,210 @@ void LB::streaming(elmtList& elmts, particleList& particles, wallList& walls) {
     static const double BBCoeff=2.0*3.0*lbmDt*lbmDt;
     // extra mass due to bounce-back and moving walls
     double extraMass=0.0;
-
-//    // initializing the elements forces (lattice units)
-//    #pragma omp parallel for
-//    for (int n=0; n<elmts.size(); ++n) {
-//        // storing for stabilization
-//        if (elmts[n].stabNumber>=2) {
-//        for (int s=elmts[n].stabNumber-1; s>=1; --s) {
-//
-//                elmts[n].FHydroOld[s]=elmts[n].FHydroOld[s-1];
-//                elmts[n].MHydroOld[s]=elmts[n].MHydroOld[s-1];
-//            }
-//        }
-//        if (elmts[n].stabNumber>=1) {
-//            elmts[n].FHydroOld[0]=elmts[n].FHydro;
-//            elmts[n].MHydroOld[0]=elmts[n].MHydro;
-//        }
-//        //initializing this time step hydrodynamic force
-//        elmts[n].FHydro.reset();
-//        elmts[n].MHydro.reset();
-//    }
-
+    
+    //    // initializing the elements forces (lattice units)
+    //    #pragma omp parallel for
+    //    for (int n=0; n<elmts.size(); ++n) {
+    //        // storing for stabilization
+    //        if (elmts[n].stabNumber>=2) {
+    //        for (int s=elmts[n].stabNumber-1; s>=1; --s) {
+    //
+    //                elmts[n].FHydroOld[s]=elmts[n].FHydroOld[s-1];
+    //                elmts[n].MHydroOld[s]=elmts[n].MHydroOld[s-1];
+    //            }
+    //        }
+    //        if (elmts[n].stabNumber>=1) {
+    //            elmts[n].FHydroOld[0]=elmts[n].FHydro;
+    //            elmts[n].MHydroOld[0]=elmts[n].MHydro;
+    //        }
+    //        //initializing this time step hydrodynamic force
+    //        elmts[n].FHydro.reset();
+    //        elmts[n].MHydro.reset();
+    //    }
+    
     // initializing wall forces
     for (int iw=0; iw<walls.size(); ++iw) {
         walls[iw].FHydro.reset();
     }
-
+    
     //  Saving in support variables f->fs
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int it=0; it<activeNodes.size(); ++it) {
         nodes[activeNodes[it]]->store();
     }
-
     
-
-//    for (int it=0; it<activeNodes.size(); ++it) { // this part is to be DELETED!!!
-//        nodes[activeNodes[it]].flag=false;
-//        nodes[activeNodes[it]].force.reset();
-//        for (int j=1; j<direc; ++j) {
-//            if (nodes[nodes[activeNodes[it]].d[j]].isWall()) {
-//                nodes[activeNodes[it]].flag=true;
-//            }
-//        }
-//    }
-
-//    for (int n=0; n<nodes.size(); ++n) {
-//        nodes[n].u.reset();//+dt*lbF/2.0/n;
-//        nodes[n].setEquilibrium(vZero);
-//    }
-
-
+    
+    
+    //    for (int it=0; it<activeNodes.size(); ++it) { // this part is to be DELETED!!!
+    //        nodes[activeNodes[it]].flag=false;
+    //        nodes[activeNodes[it]].force.reset();
+    //        for (int j=1; j<direc; ++j) {
+    //            if (nodes[nodes[activeNodes[it]].d[j]].isWall()) {
+    //                nodes[activeNodes[it]].flag=true;
+    //            }
+    //        }
+    //    }
+    
+    //    for (int n=0; n<nodes.size(); ++n) {
+    //        nodes[n].u.reset();//+dt*lbF/2.0/n;
+    //        nodes[n].setEquilibrium(vZero);
+    //    }
+    
+    
     //  Streaming
-    #pragma omp parallel for ordered reduction(+:extraMass)
+#pragma omp parallel for ordered reduction(+:extraMass)
     // cycling through active nodes
     for (int in=0; in<activeNodes.size(); ++in) {
         
         // index of active node
         const unsigned int it=activeNodes[in];
         // saving in a support node variable
-//        node dummyNode=nodes[activeNodes[it]];
+        //        node dummyNode=nodes[activeNodes[it]];
         //cycling through neighbors
         for (int j=1; j<lbmDirec; ++j) {
             // getting neighbor index
             // variable for linked node index
             const unsigned int link=neighbors[it].d[j];
-
+            
             // if neighbor is normal fluid cell what follows is true
             if (types[link].isActive()) {
                 // streaming is solved normally
-//                dummyNode.stream(opp[j], nodes[link], opp[j], one, zero);
+                //                dummyNode.stream(opp[j], nodes[link], opp[j], one, zero);
                 nodes[it]->f[opp[j]]=nodes[link]->fs[opp[j]];
             }
-
+            
             else if (types[link].isGas()) {
                 // additional variables for equilibrium f computation
                 const double usq=nodes[it]->u.norm2();
                 const double vuj=nodes[it]->u.dot(v[j]);
                 //streaming with constant pressure interface
                 // comes from dummyNode.f[opp[j]]=coeff[j]*minPres*(1.0+3.0*vuj+4.5*vuj*vuj-1.5*usq)+coeff[opp[j]]*minPres*(1.0+3.0*vujOpp+4.5*vujOpp*vujOpp-1.5*usq)-dummyNode.fs[j];
-//                dummyNode.stream(opp[j], dummyNode, j, -1.0, coeff[j]*minPres*(2.0+3.0*dt*dt*(vuj+vujOpp)+4.5*dt*dt*dt*dt*(vuj*vuj+vujOpp*vujOpp)-3.0*dt*dt*usq));
-//                dummyNode.f[opp[j]]=-dummyNode.fs[j]+coeff[j]*initDensity*(2.0+3.0*dt*dt*(vuj+vujOpp)+4.5*dt*dt*dt*dt*(vuj*vuj+vujOpp*vujOpp)-3.0*dt*dt*usq);
+                //                dummyNode.stream(opp[j], dummyNode, j, -1.0, coeff[j]*minPres*(2.0+3.0*dt*dt*(vuj+vujOpp)+4.5*dt*dt*dt*dt*(vuj*vuj+vujOpp*vujOpp)-3.0*dt*dt*usq));
+                //                dummyNode.f[opp[j]]=-dummyNode.fs[j]+coeff[j]*initDensity*(2.0+3.0*dt*dt*(vuj+vujOpp)+4.5*dt*dt*dt*dt*(vuj*vuj+vujOpp*vujOpp)-3.0*dt*dt*usq);
                 nodes[it]->f[opp[j]]=-nodes[it]->fs[j]+coeff[j]*initDensity*(2.0+C2x2*(vuj*vuj)-C3x2*usq);
             }
-/*
-//            else if (types[link].isInsideParticle()) {
-//                // getting the index of the particle to compute force in the right object
-//                unsigned int particleIndex=types[link].getSolidIndex();
-//                unsigned int clusterIndex=particles[particleIndex].clusterIndex;
-//                // calculating velocity of the solid boundary at the node (due to rotation of particles)
-//                // vectorized radius (lattice units)
-//                tVect radius=getPosition(link)-particles[particleIndex].x0/unit.Length+particles[particleIndex].radiusVec/unit.Length;
-//                // update velocity of the particle node (u=v_center+omega x radius) (lattice units)
-//                tVect localVel=elmts[clusterIndex].x1/unit.Speed+(elmts[clusterIndex].w.cross(radius))/unit.AngVel;
-//                // variation in Bounce-Back due to moving object (lattice units)
-//                double BBi=BBCoeff*nodes[it]->n*coeff[j]*localVel.dot(v[j]); //CHECK THIS LINE!!!! (1.0-initDensity/dummyNode.n)? *dummyNode.mass
-//                // force due to momentum exchange. (lattice units)
-//                // static pressure is subtracted in order to correctly compute buoyancy for floating objects
-//                tVect BBforce=nodes[it]->bounceBackForce(j, staticPres, BBi);
-//                // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
-////                if (!dummyNode.flag) {
-//                #pragma omp critical
-//                {
-//                    elmts[clusterIndex].FHydro+=BBforce;
-//                    elmts[clusterIndex].MHydro+=radius.cross(BBforce);
-////                    dummyNode.force+=BBforce;
-//                }
-////                }
-//                // adding the extra mass to the surplus
-//                extraMass+=nodes[it]->mass*BBi;
-//                // streaming in case of Bounce-Back
-////                dummyNode.stream(opp[j], dummyNode, j, 1.0, -BBi);
-//                nodes[it]->f[opp[j]]=nodes[it]->fs[j]-BBi;
-//            }    */
+            /*
+             //            else if (types[link].isInsideParticle()) {
+             //                // getting the index of the particle to compute force in the right object
+             //                unsigned int particleIndex=types[link].getSolidIndex();
+             //                unsigned int clusterIndex=particles[particleIndex].clusterIndex;
+             //                // calculating velocity of the solid boundary at the node (due to rotation of particles)
+             //                // vectorized radius (lattice units)
+             //                tVect radius=getPosition(link)-particles[particleIndex].x0/unit.Length+particles[particleIndex].radiusVec/unit.Length;
+             //                // update velocity of the particle node (u=v_center+omega x radius) (lattice units)
+             //                tVect localVel=elmts[clusterIndex].x1/unit.Speed+(elmts[clusterIndex].w.cross(radius))/unit.AngVel;
+             //                // variation in Bounce-Back due to moving object (lattice units)
+             //                double BBi=BBCoeff*nodes[it]->n*coeff[j]*localVel.dot(v[j]); //CHECK THIS LINE!!!! (1.0-initDensity/dummyNode.n)? *dummyNode.mass
+             //                // force due to momentum exchange. (lattice units)
+             //                // static pressure is subtracted in order to correctly compute buoyancy for floating objects
+             //                tVect BBforce=nodes[it]->bounceBackForce(j, staticPres, BBi);
+             //                // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
+             ////                if (!dummyNode.flag) {
+             //                #pragma omp critical
+             //                {
+             //                    elmts[clusterIndex].FHydro+=BBforce;
+             //                    elmts[clusterIndex].MHydro+=radius.cross(BBforce);
+             ////                    dummyNode.force+=BBforce;
+             //                }
+             ////                }
+             //                // adding the extra mass to the surplus
+             //                extraMass+=nodes[it]->mass*BBi;
+             //                // streaming in case of Bounce-Back
+             ////                dummyNode.stream(opp[j], dummyNode, j, 1.0, -BBi);
+             //                nodes[it]->f[opp[j]]=nodes[it]->fs[j]-BBi;
+             //            }    */
             // for curved walls there is the rule of Mei-Luo-Shyy
             else if (types[link].isCurvedWall()) {
-//                    // getting the index of the wall to compute force in the right object
-//                    const int solidIndex=types[link].getSolidIndex();
-                    // velocity of the wall
-                    const tVect vel=nodes[link]->u;
-                    // variation in Bounce-Back due to moving object
-                    const double BBi=BBCoeff*nodes[it]->n*coeff[j]*vel.dot(v[j]);// mass!!!!!
-
-//                    // static pressure is subtracted in order to correctly compute buoyancy for floating objects
-//                    const tVect BBforce=nodes[it]->bounceBackForce(j, staticPres, BBi);
-//                    // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
-//                    #pragma omp ordered
-//                    {
-//                        walls[solidIndex].FHydro+=BBforce;
-//                    }
-                    // get value for chi coefficient
-                    const double chi=curves[link]->getChi(opp[j], 0.5+3.0*nodes[it]->visc);
-                    // get fluid reference velocity
-                    tVect ubf(0.0,0.0,0.0);
-                    if (curves[link]->delta[opp[j]]>=0.5) {
-                        ubf=curves[link]->m1[opp[j]]*nodes[it]->u+curves[link]->m2[opp[j]]*vel;
+                //                    // getting the index of the wall to compute force in the right object
+                //                    const int solidIndex=types[link].getSolidIndex();
+                // velocity of the wall
+                const tVect vel=nodes[link]->u;
+                // variation in Bounce-Back due to moving object
+                const double BBi=BBCoeff*nodes[it]->n*coeff[j]*vel.dot(v[j]);// mass!!!!!
+                
+                //                    // static pressure is subtracted in order to correctly compute buoyancy for floating objects
+                //                    const tVect BBforce=nodes[it]->bounceBackForce(j, staticPres, BBi);
+                //                    // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
+                //                    #pragma omp ordered
+                //                    {
+                //                        walls[solidIndex].FHydro+=BBforce;
+                //                    }
+                // get value for chi coefficient
+                const double chi=curves[link]->getChi(opp[j], 0.5+3.0*nodes[it]->visc);
+                // get fluid reference velocity
+                tVect ubf(0.0,0.0,0.0);
+                if (curves[link]->delta[opp[j]]>=0.5) {
+                    ubf=curves[link]->m1[opp[j]]*nodes[it]->u+curves[link]->m2[opp[j]]*vel;
+                }
+                else {
+                    const unsigned int linkBack=neighbors[it].d[opp[j]];
+                    if (types[linkBack].isFluid() && nodes[linkBack]!=0) {
+                        ubf=nodes[linkBack]->u;
                     }
                     else {
-                        const unsigned int linkBack=neighbors[it].d[opp[j]];
-                        if (types[linkBack].isFluid() && nodes[linkBack]!=0) {
-                            ubf=nodes[linkBack]->u;
-                        }
-                        else {
-                            ubf=vel;
-                        }
+                        ubf=vel;
                     }
-                    // calculate missing distribution
-                    const double usq=nodes[it]->u.norm2();
-                    const double vu=nodes[it]->u.dot(v[j]);
-                    const double fStar=nodes[it]->n*coeff[j]*(1+C1*v[j].dot(ubf)+C2*vu*vu+C3*usq);
-
-                    // stream
-//                    dummyNode.stream(opp[j], dummyNode, j, 1.0, -BBi);
-                    nodes[it]->f[opp[j]]=(1.0-chi)*nodes[it]->fs[j]+chi*fStar-BBi;
-                    // adding the extra mass to the surplus
-                    extraMass+=nodes[it]->mass*(chi*nodes[it]->fs[j]-chi*fStar+BBi);
+                }
+                // calculate missing distribution
+                const double usq=nodes[it]->u.norm2();
+                const double vu=nodes[it]->u.dot(v[j]);
+                const double fStar=nodes[it]->n*coeff[j]*(1+C1*v[j].dot(ubf)+C2*vu*vu+C3*usq);
+                
+                // stream
+                //                    dummyNode.stream(opp[j], dummyNode, j, 1.0, -BBi);
+                nodes[it]->f[opp[j]]=(1.0-chi)*nodes[it]->fs[j]+chi*fStar-BBi;
+                // adding the extra mass to the surplus
+                extraMass+=nodes[it]->mass*(chi*nodes[it]->fs[j]-chi*fStar+BBi);
             }
             // for moving walls there is simple bounce-back with velocity correction
             else if (types[link].isDynWall()) {
-//                    // getting the index of the wall to compute force in the right object
-                    const int solidIndex=types[link].getSolidIndex();
-                    // velocity of the wall
-                    const tVect vel=nodes[link]->u;
-                    // variation in Bounce-Back due to moving object
-                    const double BBi=BBCoeff*nodes[it]->n*coeff[j]*vel.dot(v[j]);// mass!!!!!
-
-                    // static pressure is subtracted in order to correctly compute buoyancy for floating objects
-                    const tVect BBforce=nodes[it]->bounceBackForce(j, staticPres, BBi);
-                    // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
-                    #pragma omp ordered
-                    {
-                        walls[solidIndex].FHydro+=BBforce;
-                    }
-                    // stream
-//                    dummyNode.stream(opp[j], dummyNode, j, 1.0, -BBi);
-                    nodes[it]->f[opp[j]]=nodes[it]->fs[j]-BBi;
-                    // adding the extra mass to the surplus
-                    extraMass+=BBi*nodes[it]->mass;
+                //                    // getting the index of the wall to compute force in the right object
+                const int solidIndex=types[link].getSolidIndex();
+                // velocity of the wall
+                const tVect vel=nodes[link]->u;
+                // variation in Bounce-Back due to moving object
+                const double BBi=BBCoeff*nodes[it]->n*coeff[j]*vel.dot(v[j]);// mass!!!!!
+                
+                // static pressure is subtracted in order to correctly compute buoyancy for floating objects
+                const tVect BBforce=nodes[it]->bounceBackForce(j, staticPres, BBi);
+                // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
+#pragma omp ordered
+                {
+                    walls[solidIndex].FHydro+=BBforce;
+                }
+                // stream
+                //                    dummyNode.stream(opp[j], dummyNode, j, 1.0, -BBi);
+                nodes[it]->f[opp[j]]=nodes[it]->fs[j]-BBi;
+                // adding the extra mass to the surplus
+                extraMass+=BBi*nodes[it]->mass;
             }
-
+            
             // for walls there is simple bounce-back
             else if (types[link].isStatWall()) {
-//                // getting the index of the wall to compute force in the right object
-//                int solidIndex=nodes[link].solidIndex;
-//                // static pressure is subtracted in order to correctly compute buoyancy for floating objects
-//                tVect BBforce=dummyNode.bounceBackForce(j, staticPres, zero);
-//                // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
-//                #pragma omp ordered
-//                {
-//                    walls[solidIndex].force+=BBforce;
-//                }
-//                dummyNode.stream(opp[j], dummyNode, j, 1.0, 0.0);
+                //                // getting the index of the wall to compute force in the right object
+                //                int solidIndex=nodes[link].solidIndex;
+                //                // static pressure is subtracted in order to correctly compute buoyancy for floating objects
+                //                tVect BBforce=dummyNode.bounceBackForce(j, staticPres, zero);
+                //                // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
+                //                #pragma omp ordered
+                //                {
+                //                    walls[solidIndex].force+=BBforce;
+                //                }
+                //                dummyNode.stream(opp[j], dummyNode, j, 1.0, 0.0);
                 nodes[it]->f[opp[j]]=nodes[it]->fs[j];
             }
-
+            
             else if (types[link].isSlipStatWall()) {
-//                // getting the index of the wall to compute force in the right object
-//                int solidIndex=nodes[link].solidIndex;
-//                // static pressure is subtracted in order to correctly compute buoyancy for floating objects
-//                tVect BBforce=dummyNode.bounceBackForce(j, staticPres, zero);
-//                // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
-//                #pragma omp ordered
-//                {
-//                    walls[solidIndex].force+=BBforce;
-//                }
-//                dummyNode.stream(opp[j], dummyNode, j, 1.0, 0.0);
+                //                // getting the index of the wall to compute force in the right object
+                //                int solidIndex=nodes[link].solidIndex;
+                //                // static pressure is subtracted in order to correctly compute buoyancy for floating objects
+                //                tVect BBforce=dummyNode.bounceBackForce(j, staticPres, zero);
+                //                // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
+                //                #pragma omp ordered
+                //                {
+                //                    walls[solidIndex].force+=BBforce;
+                //                }
+                //                dummyNode.stream(opp[j], dummyNode, j, 1.0, 0.0);
                 if (j>6) {
                     bool active1=false;
                     bool active2=false;
@@ -1382,15 +1382,15 @@ void LB::streaming(elmtList& elmts, particleList& particles, wallList& walls) {
                     if (active1 && !active2) {
                         // first
                         nodes[it]->f[opp[j]]=S1*nodes[nodeCheck1]->fs[slip1[j]]+S2*nodes[it]->fs[j];
-
+                        
                     }
                     else if (!active1 && active2) {
                         // second
                         nodes[it]->f[opp[j]]=S1*nodes[nodeCheck2]->fs[slip2[j]]+S2*nodes[it]->fs[j];
                     }
                     else {
-                       // standard BB
-                       nodes[it]->f[opp[j]]=nodes[it]->fs[j];
+                        // standard BB
+                        nodes[it]->f[opp[j]]=nodes[it]->fs[j];
                     }
                 }
                 else {
@@ -1398,23 +1398,23 @@ void LB::streaming(elmtList& elmts, particleList& particles, wallList& walls) {
                     nodes[it]->f[opp[j]]=nodes[it]->fs[j];
                 }
             }
-
+            
             else if (types[link].isSlipDynWall()) {
-//                // getting the index of the wall to compute force in the right object
-//                int solidIndex=nodes[link].solidIndex;
-//                // static pressure is subtracted in order to correctly compute buoyancy for floating objects
-//                tVect BBforce=dummyNode.bounceBackForce(j, staticPres, zero);
-//                // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
-//                #pragma omp ordered
-//                {
-//                    walls[solidIndex].force+=BBforce;
-//                }
-//                dummyNode.stream(opp[j], dummyNode, j, 1.0, 0.0);
+                //                // getting the index of the wall to compute force in the right object
+                //                int solidIndex=nodes[link].solidIndex;
+                //                // static pressure is subtracted in order to correctly compute buoyancy for floating objects
+                //                tVect BBforce=dummyNode.bounceBackForce(j, staticPres, zero);
+                //                // updating force and torque on the object (lattice units). This point is critical since many nodes update the force on the same object (lattice units)
+                //                #pragma omp ordered
+                //                {
+                //                    walls[solidIndex].force+=BBforce;
+                //                }
+                //                dummyNode.stream(opp[j], dummyNode, j, 1.0, 0.0);
                 // velocity of the wall
                 const tVect vel=nodes[link]->u;
                 // variation in Bounce-Back due to moving object
                 const double BBi=BBCoeff*nodes[it]->n*coeff[j]*vel.dot(v[j]);
-
+                
                 if (j>6) {
                     bool active1=false;
                     bool active2=false;
@@ -1441,9 +1441,9 @@ void LB::streaming(elmtList& elmts, particleList& particles, wallList& walls) {
                         extraMass+=S2*nodes[it]->mass*BBi;
                     }
                     else {
-                       // standard BB
-                       nodes[it]->f[opp[j]]=nodes[it]->fs[j]-BBi;
-                       // adding the extra mass to the surplus
+                        // standard BB
+                        nodes[it]->f[opp[j]]=nodes[it]->fs[j]-BBi;
+                        // adding the extra mass to the surplus
                         extraMass+=nodes[it]->mass*BBi;
                     }
                 }
@@ -1454,34 +1454,34 @@ void LB::streaming(elmtList& elmts, particleList& particles, wallList& walls) {
                     extraMass+=nodes[it]->mass*BBi;
                 }
             }
-
+            
             else {
                 cout<<link<<" "<<getX(link)<<" "<<getY(link)<<" "<<getZ(link)<<" "<<types[link].getType()<<" TYPE ERROR"<<endl;
                 exit(0);
             }
         }
     }
-
-//    unsigned int targetNode=0;
-//    double maxForce=0.0;
-//    for (int it=0; it<activeNodes.size(); ++it) { // this part is to be DELETED!!!
-//        if (nodes[activeNodes[it]].force.norm()>maxForce) {
-//            maxForce=nodes[activeNodes[it]].force.norm();
-//            targetNode=activeNodes[it];
-//        }
-//    }
-//    cout<<"Target="<<targetNode<<"\t";
-
-
+    
+    //    unsigned int targetNode=0;
+    //    double maxForce=0.0;
+    //    for (int it=0; it<activeNodes.size(); ++it) { // this part is to be DELETED!!!
+    //        if (nodes[activeNodes[it]].force.norm()>maxForce) {
+    //            maxForce=nodes[activeNodes[it]].force.norm();
+    //            targetNode=activeNodes[it];
+    //        }
+    //    }
+    //    cout<<"Target="<<targetNode<<"\t";
+    
+    
     // redistributing extra mass due to bounce back to interface cells
     redistributeMass(extraMass);
-
-//    // shifting elements forces and torques to physical units
-//    for (int n=0; n<elmts.size(); ++n) {
-//        elmts[n].FHydro*=unit.Force;
-//        elmts[n].MHydro*=unit.Torque;
-//    }
-
+    
+    //    // shifting elements forces and torques to physical units
+    //    for (int n=0; n<elmts.size(); ++n) {
+    //        elmts[n].FHydro*=unit.Force;
+    //        elmts[n].MHydro*=unit.Torque;
+    //    }
+    
     for (int n=0; n<walls.size(); ++n) {
         walls[n].FHydro*=unit.Force;
     }
@@ -1491,14 +1491,14 @@ void LB::streaming(elmtList& elmts, particleList& particles, wallList& walls) {
 
 void LB::updateMass() {
     // refer to the article of Miller or of Svec et al. for this
-
-    #pragma omp parallel for
+    
+#pragma omp parallel for
     for (int it=0; it<interfaceNodes.size(); ++it) {
         nodes[interfaceNodes[it]]->newMass=nodes[interfaceNodes[it]]->mass;
     }
-
+    
     // mass for interface nodes is regulated by the evolution equation
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int it=0; it<interfaceNodes.size(); ++it) {
         const int index=interfaceNodes[it];
         // additional mass streaming to/from interface
@@ -1512,35 +1512,35 @@ void LB::updateMass() {
             if (types[link].isInterface()) {
                 // average liquid fraction
                 averageMass=0.5*(nodes[link]->mass+nodes[index]->mass);
-//                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
+                //                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
             }
             else if (types[link].isFluid()) {
                 averageMass=1.0;
-//                dummyNode.f[opp[j]]=nodes[link].fs[opp[j]];
-//                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
+                //                dummyNode.f[opp[j]]=nodes[link].fs[opp[j]];
+                //                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
             }
-//            else if (types[link].isParticle()) {
-//                averageMass=1.0*nodes[index]->mass;
-////                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
-//            }
+            //            else if (types[link].isParticle()) {
+            //                averageMass=1.0*nodes[index]->mass;
+            ////                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
+            //            }
             else if (types[link].isGas()) {
                 averageMass=0.0;
-//                averageMass=1.0;//*nodes[index].mass;
-//                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
+                //                averageMass=1.0;//*nodes[index].mass;
+                //                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
             }
             else if (types[link].isDynWall()) {
                 averageMass=1.0*nodes[index]->mass;//1.0*nodes[index].mass;//0.5*nodes[index].u.norm()/(nodes[link].u.norm()+nodes[index].u.norm());
-//              double BBi=2.0*3.0*dummyNode.n*coeff[j]*vel.dot(v[j]);
-//              dummyNode.f[opp[j]]=dummyNode.fs[j]-BBi;
-//                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
-//                cout<<"delta mass ="<<averageMass<<","<<deltaMass<<"\n";
+                //              double BBi=2.0*3.0*dummyNode.n*coeff[j]*vel.dot(v[j]);
+                //              dummyNode.f[opp[j]]=dummyNode.fs[j]-BBi;
+                //                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
+                //                cout<<"delta mass ="<<averageMass<<","<<deltaMass<<"\n";
             }
             else if (types[link].isCurvedWall()) {
                 averageMass=1.0*nodes[index]->mass;//1.0*nodes[index].mass;//0.5*nodes[index].u.norm()/(nodes[link].u.norm()+nodes[index].u.norm());
-//              double BBi=2.0*3.0*dummyNode.n*coeff[j]*vel.dot(v[j]);
-//              dummyNode.f[opp[j]]=dummyNode.fs[j]-BBi;
-//                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
-//                cout<<"delta mass ="<<averageMass<<","<<deltaMass<<"\n";
+                //              double BBi=2.0*3.0*dummyNode.n*coeff[j]*vel.dot(v[j]);
+                //              dummyNode.f[opp[j]]=dummyNode.fs[j]-BBi;
+                //                deltaMass+=averageMass*(nodes[index].f[opp[j]]-nodes[index].fs[j]);
+                //                cout<<"delta mass ="<<averageMass<<","<<deltaMass<<"\n";
             }
             else if (types[link].isSlipDynWall()) {
                 if (j>6) {
@@ -1565,7 +1565,7 @@ void LB::updateMass() {
                         averageMass+=1.0*(1.0-slipCoefficient)*nodes[index]->mass;
                     }
                     else {
-                       // adding the extra mass to the surplus
+                        // adding the extra mass to the surplus
                         averageMass+=1.0*nodes[index]->mass;
                     }
                 }
@@ -1579,11 +1579,11 @@ void LB::updateMass() {
         nodes[index]->newMass+=deltaMass;
     }
     // mass for fluid nodes is equal to density
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int it=0; it<fluidNodes.size(); ++it) {
         nodes[fluidNodes[it]]->mass=nodes[fluidNodes[it]]->n;
     }
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int it=0; it<interfaceNodes.size(); ++it) {
         nodes[interfaceNodes[it]]->mass=nodes[interfaceNodes[it]]->newMass;
     }
@@ -1591,30 +1591,30 @@ void LB::updateMass() {
 
 void LB::updateInterface() {
     // updates the location of the interface, creating and deleting interface nodes
-
+    
     // variable for storage of mass surplus
     double massSurplus=0.0;
-
+    
     // lists for "mutant" nodes
     unsIntList filledNodes, emptiedNodes;    
     // interface nodes created due to interface evolution
     unsIntList newInterfaceNodes;
-
+    
     // filling lists of mutant nodes and changing their type
     findInterfaceMutants(filledNodes, emptiedNodes);
-
+    
     // fixing the interface (always one interface between fluid and gas)
     smoothenInterface(filledNodes, emptiedNodes, newInterfaceNodes, massSurplus);
-
+    
     // updating characteristics of mutant nodes
     updateMutants(filledNodes, emptiedNodes, newInterfaceNodes, massSurplus);
-
+    
     // remove isolated interface cells (both surrounded by gas and by fluid)
     removeIsolated(massSurplus);
-
+    
     // distributing surplus to interface cells
     redistributeMass(massSurplus);
-
+    
 }
 
 void LB::findInterfaceMutants(unsIntList& filledNodes, unsIntList& emptiedNodes) {
@@ -1623,7 +1623,7 @@ void LB::findInterfaceMutants(unsIntList& filledNodes, unsIntList& emptiedNodes)
     // interface -> gas (emptied node)
     filledNodes.clear();
     emptiedNodes.clear();
-
+    
     // CHECKING FOR MUTANT NODES (old backward style for cycle...)
     for (int ind=interfaceNodes.size()-1; ind>=0; --ind) {
         const unsigned int i=interfaceNodes[ind];
@@ -1647,12 +1647,12 @@ void LB::findInterfaceMutants(unsIntList& filledNodes, unsIntList& emptiedNodes)
             interfaceNodes.erase(interfaceNodes.begin()+ind);
         }
     }
- }
+}
 
 void LB::smoothenInterface(unsIntList& filledNodes, unsIntList& emptiedNodes, unsIntList& newInterfaceNodes, double& massSurplus) {
-
+    
     newInterfaceNodes.clear();
-
+    
     // CHECKING FOR NEW INTERFACE NODES from neighboring a new fluid node
     for (int it=0; it<filledNodes.size(); ++it) {
         const unsigned int index=filledNodes[it];
@@ -1671,11 +1671,11 @@ void LB::smoothenInterface(unsIntList& filledNodes, unsIntList& emptiedNodes, un
                 nodes[link]->initialize(initDensity, nodes[index]->u, 0.01*initDensity, nodes[index]->visc, nodes[index]->hydroForce+lbF);
                 // the 1% of the mass is taken form the surplus
                 massSurplus-=0.01*initDensity;
-//                activeNodes.push_back(nodes[link].index);
+                //                activeNodes.push_back(nodes[link].index);
             }
         }
     }
-
+    
     // CHECKING FOR NEW INTERFACE NODES from neighboring a new gas node
     for (int it=0; it<emptiedNodes.size(); ++it) {
         const unsigned int index=emptiedNodes[it];
@@ -1701,7 +1701,7 @@ void LB::smoothenInterface(unsIntList& filledNodes, unsIntList& emptiedNodes, un
 }
 
 void LB::updateMutants(unsIntList& filledNodes, unsIntList& emptiedNodes, unsIntList& newInterfaceNodes, double& massSurplus) {
-
+    
     // resetting new gas macroscopic quantities
     for (int it=0; it<emptiedNodes.size(); ++it) {
         bool isNotInterface=true;
@@ -1718,7 +1718,7 @@ void LB::updateMutants(unsIntList& filledNodes, unsIntList& emptiedNodes, unsInt
             nodes[emptiedNodes[it]]=0;
         }
     }
-
+    
     // resetting new fluid macroscopic quantities
     for (int it=0; it<filledNodes.size(); ++it) {
         bool isNotInterface=true;
@@ -1738,12 +1738,12 @@ void LB::updateMutants(unsIntList& filledNodes, unsIntList& emptiedNodes, unsInt
     for (int it=0; it<newInterfaceNodes.size(); ++it) {
         interfaceNodes.push_back(newInterfaceNodes[it]);
     }
-
+    
 }
 
 void LB::removeIsolated(double& massSurplus) {
     // remove isolated interface cells (surrounded either by only fluid or only solid cells)
-
+    
     // checking if it is surrounded by fluid (in that case is converted to fluid). Solid is an exception
     // reverse cycle is needed because of deletion function
     for (int ind=interfaceNodes.size()-1; ind>=0; --ind) {
@@ -1757,7 +1757,7 @@ void LB::removeIsolated(double& massSurplus) {
             }
         }
         if (surroundedFluid) {
-//            cout<<nodes[i].x<<" "<<nodes[i].y<<" "<<nodes[i].z<<" NEW FLUID NODE from surrounding\n";
+            //            cout<<nodes[i].x<<" "<<nodes[i].y<<" "<<nodes[i].z<<" NEW FLUID NODE from surrounding\n";
             // update mass storage for balance
             massSurplus+=nodes[i]->mass-nodes[i]->n;
             // update characteristics (inherited from the gas node)
@@ -1767,7 +1767,7 @@ void LB::removeIsolated(double& massSurplus) {
             fluidNodes.push_back(i);
         }
     }
-
+    
     // checking if it is surrounded by gas (in that case is converted to gas)
     // or, better, if it is not connected to fluid (could be connected to walls or particles)
     for (int ind=interfaceNodes.size()-1; ind>=0; --ind) {
@@ -1782,7 +1782,7 @@ void LB::removeIsolated(double& massSurplus) {
         }
         // updating mass surplus
         if (surroundedGas) {
-//            cout<<nodes[i].x<<" "<<nodes[i].y<<" "<<nodes[i].z<<" NEW GAS NODE from surrounding\n";
+            //            cout<<nodes[i].x<<" "<<nodes[i].y<<" "<<nodes[i].z<<" NEW GAS NODE from surrounding\n";
             // update mass
             massSurplus+=nodes[i]->mass;
             interfaceNodes.erase(interfaceNodes.begin()+ind);
@@ -1796,8 +1796,8 @@ void LB::removeIsolated(double& massSurplus) {
 void LB::redistributeMass(const double& massSurplus) {
     // redistribute the mass surplus among interface cells
     const double addMass=massSurplus/interfaceNodes.size();
-
-    #pragma omp parallel for
+    
+#pragma omp parallel for
     for (int it=0; it<interfaceNodes.size(); ++it) {
         nodes[interfaceNodes[it]]->mass+=addMass;
     }
@@ -1806,19 +1806,19 @@ void LB::redistributeMass(const double& massSurplus) {
 void LB::enforceMassConservation(){
     // calculate total mass
     double thisMass=0.0;
-        for (int it=0; it<nodes.size(); ++it){
+    for (int it=0; it<nodes.size(); ++it){
         if (types[it].isActive() && !types[it].isInsideParticle()) {
             thisMass+=nodes[it]->mass;
         }
     }
-
+    
     // mass deficit
     const double massDeficit=(thisMass-totalMass);
     // cout<<endl<<"This="<<thisMass<<" tot="<<totalMass;
-
+    
     // fix it
     redistributeMass(-0.01*massDeficit);
-
+    
 }
 
 // particle coupling functions
@@ -1826,32 +1826,32 @@ void LB::enforceMassConservation(){
 void LB::updateIndices(elmtList& elmts, particleList& particles) {
     // checks if solid indices need to be changed due to periodic shifting
     // this is a compulsory step when working with ghost particles
-
-
-   initializeParticleBoundaries(particles);
-   resetLists();
-
-
-////    cout<<"Updating indices\n";
-////    #pragma omp parallel for
-//    for (int ip=0; ip<particleNodes.size(); ++ip) {
-//        const unsigned int index=particleNodes[ip];
-//        const tVect nodePosition=positions[index];
-//        for (int p=0; p<particles.size();++p) {
-//            if (nodePosition.insideSphere(particles[p].x0/unit.Length,particles[p].r/unit.Length)) { //-0.5?
-//                // if the node is inside the element, then set the indices again and leave
-//                types[index].setSolidIndex(particles[p].particleIndex);
-//                break;
-//            }
-//        }
-//    }
-
+    
+    
+    initializeParticleBoundaries(particles);
+    resetLists();
+    
+    
+    ////    cout<<"Updating indices\n";
+    ////    #pragma omp parallel for
+    //    for (int ip=0; ip<particleNodes.size(); ++ip) {
+    //        const unsigned int index=particleNodes[ip];
+    //        const tVect nodePosition=positions[index];
+    //        for (int p=0; p<particles.size();++p) {
+    //            if (nodePosition.insideSphere(particles[p].x0/unit.Length,particles[p].r/unit.Length)) { //-0.5?
+    //                // if the node is inside the element, then set the indices again and leave
+    //                types[index].setSolidIndex(particles[p].particleIndex);
+    //                break;
+    //            }
+    //        }
+    //    }
+    
 }
 
 void LB::computeHydroForces(elmtList& elmts, particleList& particles) {
-
-     // initializing the elements forces (lattice units)
-    #pragma omp parallel for
+    
+    // initializing the elements forces (lattice units)
+#pragma omp parallel for
     for (int n=0; n<elmts.size(); ++n) {
         //initializing this time step hydrodynamic force
         elmts[n].FHydro=tVect(0.0,0.0,0.0);
@@ -1859,8 +1859,8 @@ void LB::computeHydroForces(elmtList& elmts, particleList& particles) {
         // initializing the fluid mass for buoyancy
         elmts[n].fluidVolume=0.0;
     }
-
-    #pragma omp parallel for
+    
+#pragma omp parallel for
     // cycling through active nodes
     for (int ip=0; ip<activeNodes.size(); ++ip) {
         unsigned int index=activeNodes[ip];
@@ -1875,26 +1875,26 @@ void LB::computeHydroForces(elmtList& elmts, particleList& particles) {
             const tVect radius=positions[index]-particles[particleIndex].x0/unit.Length+particles[particleIndex].radiusVec/unit.Length;
             // update velocity of the particle node (u=v_center+omega x radius) (lattice units)
             const tVect localVel=elmts[clusterIndex].xp1/unit.Speed+(elmts[clusterIndex].wpGlobal.cross(radius))/unit.AngVel;
-
+            
             // calculate differential velocity
             const tVect diffVel=nodes[index]->liquidFraction()*(nodes[index]->u-localVel);
-
+            
             // force on fluid
             nodes[index]->hydroForce+=-1.0*diffVel; // -1.0*nodes[index]->liquidFraction()*diffVel;
-
-//             // force on fluid
-//            # pragma omp critical
-//            {
-//                for (int j=0; j<lbmDirec; ++j) {
-//                    const unsigned int link=neighbors[index].d[j];
-//                    if (types[link].isActive()) {
-//                        nodes[link]->hydroForce+=-1.0/nodes[index]->liquidFraction()*coeff[j]*diffVel;
-//                    }
-//                }
-//            }
-
+            
+            //             // force on fluid
+            //            # pragma omp critical
+            //            {
+            //                for (int j=0; j<lbmDirec; ++j) {
+            //                    const unsigned int link=neighbors[index].d[j];
+            //                    if (types[link].isActive()) {
+            //                        nodes[link]->hydroForce+=-1.0/nodes[index]->liquidFraction()*coeff[j]*diffVel;
+            //                    }
+            //                }
+            //            }
+            
             // force on particle
-            #pragma omp critical
+#pragma omp critical
             {
                 elmts[clusterIndex].fluidVolume+=nodes[index]->mass;
                 elmts[clusterIndex].FHydro+=1.0*diffVel;
@@ -1902,27 +1902,27 @@ void LB::computeHydroForces(elmtList& elmts, particleList& particles) {
             }
         }
     }
-
-
+    
+    
     // shifting elements forces and torques to physical units
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int n=0; n<elmts.size(); ++n) {
         
         // adding buoyancy
         const tVect buoyancy=(-1.0)*elmts[n].fluidVolume*lbF;
-
-//        elmts[n].FHydro+=buoyancy;
+        
+        //        elmts[n].FHydro+=buoyancy;
         elmts[n].FHydro*=unit.Force;
         elmts[n].MHydro*=unit.Torque;
         elmts[n].fluidVolume*=unit.Volume;
     }
- }
+}
 
 void LB::findNewActive(unsIntList& newPopUpNodes, elmtList& elmts, particleList& particles) {
-
+    
     // SOLID TO ACTIVE CHECK
     // cycling through particle nodes
-//    #pragma omp parallel for ordered
+    //    #pragma omp parallel for ordered
     for (int ip=0; ip<particleNodes.size(); ++ip) {
         const unsigned int index=particleNodes[ip];
         const tVect nodePosition=positions[index];
@@ -1948,15 +1948,15 @@ void LB::findNewActive(unsIntList& newPopUpNodes, elmtList& elmts, particleList&
         }
         if (newActive) {
             // turning up the cell
-//            #pragma omp ordered
+            //            #pragma omp ordered
             newPopUpNodes.push_back(index);
             types[index].setOutsideParticle();
-//            cout<<"new active\n";
+            //            cout<<"new active\n";
         }
     }
-
+    
     for (int it=0; it<newPopUpNodes.size(); ++it) {
-//        cout<<"New active\n";
+        //        cout<<"New active\n";
         for (int ind=particleNodes.size()-1; ind>=0; --ind) {
             if (newPopUpNodes[it]==particleNodes[ind]) {
                 // deleting the cell from particle list
@@ -1969,10 +1969,10 @@ void LB::findNewActive(unsIntList& newPopUpNodes, elmtList& elmts, particleList&
 void LB::findNewSolid(unsIntList& newSolidNodes, elmtList& elmts, particleList& particles) {
     // ACTIVE TO SOLID CHECK
     // we check only first order neighbors of particle nodes. This is done in order to avoid cycling through all active cells
-//    #pragma omp parallel for ordered
+    //    #pragma omp parallel for ordered
     for (int it=0; it<particleNodes.size(); ++it) {
         const unsigned int index=particleNodes[it];
-//    for (intlist::iterator it=particleNodes.begin(); it<particleNodes.end(); ++it) {
+        //    for (intlist::iterator it=particleNodes.begin(); it<particleNodes.end(); ++it) {
         // solid index to identify cluster
         const unsigned int particleIndex=types[index].getSolidIndex();
         const unsigned int clusterIndex=particles[particleIndex].clusterIndex;
@@ -1987,7 +1987,7 @@ void LB::findNewSolid(unsIntList& newSolidNodes, elmtList& elmts, particleList& 
                 unsigned int componentIndex=0;
                 // cycling through all components of the cluster
                 for (int j=0; j<elmts[clusterIndex].components.size(); ++j) {
-//                    cout<<j<<"\n";
+                    //                    cout<<j<<"\n";
                     // getting component particle index
                     componentIndex=elmts[clusterIndex].components[j];
                     // check if it getting inside
@@ -2006,7 +2006,7 @@ void LB::findNewSolid(unsIntList& newSolidNodes, elmtList& elmts, particleList& 
                     // check if we are creating a duplicate - we start with a false hypothesis
                     bool alreadyInside=false;
                     for (int it1=0; it1<newSolidNodes.size(); ++it1) {
-//                    for (intlist::iterator it1=newSolidNodes.begin(); it1!=newSolidNodes.end(); ++it1) {
+                        //                    for (intlist::iterator it1=newSolidNodes.begin(); it1!=newSolidNodes.end(); ++it1) {
                         if (link==newSolidNodes[it1]) {
                             // if it is already in the list than the true hypothesis does not hold true anymore
                             alreadyInside=true;
@@ -2017,7 +2017,7 @@ void LB::findNewSolid(unsIntList& newSolidNodes, elmtList& elmts, particleList& 
                     // at this point, if it is both newSolid and not alreadyInside we can add it to particle nodes
                     if (!alreadyInside) {
                         // solid index is assigned here to avoid sending this information to the switching functions
-//                        # pragma omp ordered
+                        //                        # pragma omp ordered
                         {
                             types[link].setSolidIndex(componentIndex);
                             types[link].setInsideParticle();
@@ -2025,7 +2025,7 @@ void LB::findNewSolid(unsIntList& newSolidNodes, elmtList& elmts, particleList& 
                             newSolidNodes.push_back(link);
                             particleNodes.push_back(link);
                         }
-                     }
+                    }
                 }
             }
         }
@@ -2033,210 +2033,210 @@ void LB::findNewSolid(unsIntList& newSolidNodes, elmtList& elmts, particleList& 
 }
 
 void LB::solidToActive(unsIntList& newPopUpNodes, elmtList& elmts, double& massSurplus) {
-
-//    for (int it=0; it<newPopUpNodes.size(); ++it) {
-////        cout<<"New active\n";
-//        for (int ind=particleNodes.size()-1; ind>=0; --ind) {
-//            if (newPopUpNodes[it]==particleNodes[ind]) {
-//                // deleting the cell from particle list
-//                particleNodes.erase(particleNodes.begin()+ind);
-//            }
-//        }
-//    }
-//
-//    // PRELIMINARY STEPS  ////////////////////////////////////////////////////////////
-//    // Initializing types for new pop-up
-//    for (int it=0; it<newPopUpNodes.size(); ++it) {
-//        // index of the popping up node
-//        unsigned int index=newPopUpNodes[it];
-//        // routine to check if it should be interface, fluid or gas
-//        bool outOfFluid=true;
-//        bool closeToGas=false;
-//        for (int j=1; j<lbmDirec; ++j) {
-//            unsigned int link=neighbors[index].d[j];
-//            if (types[link].isFluid()) {
-//                outOfFluid=false;
-//            }
-//            else if(types[link].isGas()) {
-//                closeToGas=true;
-//            }
-//        }
-//        if (outOfFluid) {
-//            //then node is fluid
-//            types[index].setGas();
-//        }
-//        if ((!outOfFluid)&&(closeToGas)) {
-//            //then node is interface
-//            types[index].setInterface();
-//        }
-//        if ((!outOfFluid)&&(!closeToGas)) {
-//            // then node is fluid
-//            types[index].setFluid();
-//        }
-//    }
-//
-//    // NEW POP-UP NODES - Initialization  ////////////////////////////////////////////////////////////
-//   for (int it=0; it<newPopUpNodes.size(); ++it) {
-//       unsigned int index=newPopUpNodes[it];
-//       // check if cell is active (it could be gas) - the type has already been assigned in the lines over here
-//        if (types[index].isActive()) {
-////            cout<<nodes[index].x<<" "<<nodes[index].y<<" "<<nodes[index].z<<" NEW ACTIVE NODE from pop-up\n";
-//            //  macroscopic velocity and density for the new cell (average of neighbors)
-//            tVect uAverage;
-//            double nAverage=0.0;
-//            double viscAverage=0.0;
-//            double mass=0.0;
-//
-//            // Routine for average properties of new nodes. CHECK!!
-//            // number of neighbor active cells
-//            unsigned int ku=0;
-//            unsigned int kn=0;
-//            uAverage.reset();
-//            // calculating average
-//            for (int j=0; j<lbmDirec; j++) {
-//                unsigned int link=neighbors[index].d[j];
-//                // checking if neighbor is active
-//                if (types[link].isActive()) {
-//                    //we need to check if this cell is a new cell, in that case its properties are not good to use
-//                    bool isNew=false;
-//                    for (int it1=0; it1<newPopUpNodes.size(); ++it1) {
-////                    for (intlist::iterator it1=newPopUpNodes.begin(); it1<newPopUpNodes.end(); ++it1) {
-//                        if (link==newPopUpNodes[it1]) {
-//                            isNew=true;
-//                            break;
-//                        }
-//                    }
-//                    if (!isNew) {
-//                         // incrementing velocity average
-//                        uAverage=uAverage+nodes[link]->u;
-//                        nAverage+=nodes[link]->n;
-//                        viscAverage+=nodes[link]->visc;
-//                        // incrementing number active neighbors
-//                        ++ku;
-//                        ++kn;
-//                    }
-//                }
-////                if (nodes[link].isParticle()) {
-////                    // incrementing velocity average
-////                    // getting local velocity
-////                    tVect radius=tVect(((double)nodes[link].x), ((double)nodes[link].y), ((double)nodes[link].z))-elmts[nodes[link].solidIndex].x0/unit.Length;
-////                    // local velocity (v_local=v_center+omega x radius) (lattice units)
-////                    tVect localVel=(elmts[nodes[link].solidIndex].x1/unit.Speed+(elmts[nodes[link].solidIndex].w.cross(radius))/unit.AngVel);
-////                    uAverage=uAverage+localVel;
-////                    // incrementing number of active neighbors
-////                    ++ku;
-////                }
-//            }
-//            if (ku==0) {
-//                uAverage.reset();
-//            }
-//            else {
-//                // dividing to get true average
-//                uAverage=uAverage/ku;
-//            }
-//            if (kn==0) {
-//                viscAverage=initDynVisc;
-//                nAverage=1.0;
-//            }
-//            else {
-//                // dividing to get true average
-//                nAverage/=kn;
-//                viscAverage/=kn;
-//            }
-//
-//            if (types[index].isInterface()) {
-////                activeNodes.push_back(nodes[index].index);
-//                interfaceNodes.push_back(index);
-//                mass=0.01*nAverage;
-//            }
-//            else if (types[index].isFluid()) {
-//                fluidNodes.push_back(index);
-////                activeNodes.push_back(nodes[index].index);
-//                mass=nAverage;
-//            }
-//            nodes[index]->initialize(nAverage, uAverage, mass, viscAverage, lbF);
-//            massSurplus-=mass;
-////            initializeNode(nodes[index], nAverage, uAverage, mass, viscAverage);
-//            unsigned int zero=0;
-//            types[index].setSolidIndex(zero);
-//        }
-//        else {
-//            // remove node
-//            delete nodes[index];
-//            nodes[index]=0;
-//        }
-//    }
-
+    
+    //    for (int it=0; it<newPopUpNodes.size(); ++it) {
+    ////        cout<<"New active\n";
+    //        for (int ind=particleNodes.size()-1; ind>=0; --ind) {
+    //            if (newPopUpNodes[it]==particleNodes[ind]) {
+    //                // deleting the cell from particle list
+    //                particleNodes.erase(particleNodes.begin()+ind);
+    //            }
+    //        }
+    //    }
+    //
+    //    // PRELIMINARY STEPS  ////////////////////////////////////////////////////////////
+    //    // Initializing types for new pop-up
+    //    for (int it=0; it<newPopUpNodes.size(); ++it) {
+    //        // index of the popping up node
+    //        unsigned int index=newPopUpNodes[it];
+    //        // routine to check if it should be interface, fluid or gas
+    //        bool outOfFluid=true;
+    //        bool closeToGas=false;
+    //        for (int j=1; j<lbmDirec; ++j) {
+    //            unsigned int link=neighbors[index].d[j];
+    //            if (types[link].isFluid()) {
+    //                outOfFluid=false;
+    //            }
+    //            else if(types[link].isGas()) {
+    //                closeToGas=true;
+    //            }
+    //        }
+    //        if (outOfFluid) {
+    //            //then node is fluid
+    //            types[index].setGas();
+    //        }
+    //        if ((!outOfFluid)&&(closeToGas)) {
+    //            //then node is interface
+    //            types[index].setInterface();
+    //        }
+    //        if ((!outOfFluid)&&(!closeToGas)) {
+    //            // then node is fluid
+    //            types[index].setFluid();
+    //        }
+    //    }
+    //
+    //    // NEW POP-UP NODES - Initialization  ////////////////////////////////////////////////////////////
+    //   for (int it=0; it<newPopUpNodes.size(); ++it) {
+    //       unsigned int index=newPopUpNodes[it];
+    //       // check if cell is active (it could be gas) - the type has already been assigned in the lines over here
+    //        if (types[index].isActive()) {
+    ////            cout<<nodes[index].x<<" "<<nodes[index].y<<" "<<nodes[index].z<<" NEW ACTIVE NODE from pop-up\n";
+    //            //  macroscopic velocity and density for the new cell (average of neighbors)
+    //            tVect uAverage;
+    //            double nAverage=0.0;
+    //            double viscAverage=0.0;
+    //            double mass=0.0;
+    //
+    //            // Routine for average properties of new nodes. CHECK!!
+    //            // number of neighbor active cells
+    //            unsigned int ku=0;
+    //            unsigned int kn=0;
+    //            uAverage.reset();
+    //            // calculating average
+    //            for (int j=0; j<lbmDirec; j++) {
+    //                unsigned int link=neighbors[index].d[j];
+    //                // checking if neighbor is active
+    //                if (types[link].isActive()) {
+    //                    //we need to check if this cell is a new cell, in that case its properties are not good to use
+    //                    bool isNew=false;
+    //                    for (int it1=0; it1<newPopUpNodes.size(); ++it1) {
+    ////                    for (intlist::iterator it1=newPopUpNodes.begin(); it1<newPopUpNodes.end(); ++it1) {
+    //                        if (link==newPopUpNodes[it1]) {
+    //                            isNew=true;
+    //                            break;
+    //                        }
+    //                    }
+    //                    if (!isNew) {
+    //                         // incrementing velocity average
+    //                        uAverage=uAverage+nodes[link]->u;
+    //                        nAverage+=nodes[link]->n;
+    //                        viscAverage+=nodes[link]->visc;
+    //                        // incrementing number active neighbors
+    //                        ++ku;
+    //                        ++kn;
+    //                    }
+    //                }
+    ////                if (nodes[link].isParticle()) {
+    ////                    // incrementing velocity average
+    ////                    // getting local velocity
+    ////                    tVect radius=tVect(((double)nodes[link].x), ((double)nodes[link].y), ((double)nodes[link].z))-elmts[nodes[link].solidIndex].x0/unit.Length;
+    ////                    // local velocity (v_local=v_center+omega x radius) (lattice units)
+    ////                    tVect localVel=(elmts[nodes[link].solidIndex].x1/unit.Speed+(elmts[nodes[link].solidIndex].w.cross(radius))/unit.AngVel);
+    ////                    uAverage=uAverage+localVel;
+    ////                    // incrementing number of active neighbors
+    ////                    ++ku;
+    ////                }
+    //            }
+    //            if (ku==0) {
+    //                uAverage.reset();
+    //            }
+    //            else {
+    //                // dividing to get true average
+    //                uAverage=uAverage/ku;
+    //            }
+    //            if (kn==0) {
+    //                viscAverage=initDynVisc;
+    //                nAverage=1.0;
+    //            }
+    //            else {
+    //                // dividing to get true average
+    //                nAverage/=kn;
+    //                viscAverage/=kn;
+    //            }
+    //
+    //            if (types[index].isInterface()) {
+    ////                activeNodes.push_back(nodes[index].index);
+    //                interfaceNodes.push_back(index);
+    //                mass=0.01*nAverage;
+    //            }
+    //            else if (types[index].isFluid()) {
+    //                fluidNodes.push_back(index);
+    ////                activeNodes.push_back(nodes[index].index);
+    //                mass=nAverage;
+    //            }
+    //            nodes[index]->initialize(nAverage, uAverage, mass, viscAverage, lbF);
+    //            massSurplus-=mass;
+    ////            initializeNode(nodes[index], nAverage, uAverage, mass, viscAverage);
+    //            unsigned int zero=0;
+    //            types[index].setSolidIndex(zero);
+    //        }
+    //        else {
+    //            // remove node
+    //            delete nodes[index];
+    //            nodes[index]=0;
+    //        }
+    //    }
+    
 }
 
 void LB::activeToSolid(unsIntList& newSolidNodes, elmtList& elmts, double& massSurplus) {
-
-//    for (int it=0; it<newSolidNodes.size(); ++it) {
-////    for (intlist::iterator it=newSolidNodes.begin(); it<newSolidNodes.end(); ++it) {
-////        cout<<"New solid\n";
-//        //adding cell to solid list
-//        particleNodes.push_back(newSolidNodes[it]);
-//        // deleting the cell from active lists (fluid or interface, depending on the type)
-//        if (types[newSolidNodes[it]].isFluid()) {
-//            for (int ind=fluidNodes.size()-1; ind>=0; --ind) {
-//                if (newSolidNodes[it]==fluidNodes[ind]) {
-//                    fluidNodes.erase(fluidNodes.begin()+ind);
-//                    break;
-//                }
-//            }
-//        }
-//        else if (types[newSolidNodes[it]].isInterface()) {
-//            for (int ind=interfaceNodes.size()-1; ind>=0; --ind) {
-//                if (newSolidNodes[it]==interfaceNodes[ind]) {
-//                    interfaceNodes.erase(interfaceNodes.begin()+ind);
-//                    break;
-//                }
-//            }
-//        }
-//    }
-//    // initializing type for new solid nodes and redistributing mass in case of interface
-//    for (int it=0; it<newSolidNodes.size(); ++it) {
-//        // index of new solid node
-//        unsigned int index=newSolidNodes[it];
-//        massSurplus+=nodes[index]->mass;
-//        // initializing type
-//        types[index].setParticle();
-//    }
-//
-//    // NEW SOLID NODES - Initialization ///////////////////////////////////////////////////////////
-//    for (int it=0; it<newSolidNodes.size(); ++it) {
-//        unsigned int index=newSolidNodes[it];
-////        cout<<nodes[index].x<<" "<<nodes[index].y<<" "<<nodes[index].z<<" NEW SOLID NODE from absorption\n";
-//        // reset velocity and mass (useful for plotting)
-//        nodes[index]->n=0.0;
-//        nodes[index]->visc=0.0;
-//        nodes[index]->u.reset();
-//        nodes[index]->mass=0.0;
-//        nodes[index]->shearRate=0.0;
-////        nodes[index].force.reset();
-//
-//        // solid index is added in the movement function
-//    }
-
+    
+    //    for (int it=0; it<newSolidNodes.size(); ++it) {
+    ////    for (intlist::iterator it=newSolidNodes.begin(); it<newSolidNodes.end(); ++it) {
+    ////        cout<<"New solid\n";
+    //        //adding cell to solid list
+    //        particleNodes.push_back(newSolidNodes[it]);
+    //        // deleting the cell from active lists (fluid or interface, depending on the type)
+    //        if (types[newSolidNodes[it]].isFluid()) {
+    //            for (int ind=fluidNodes.size()-1; ind>=0; --ind) {
+    //                if (newSolidNodes[it]==fluidNodes[ind]) {
+    //                    fluidNodes.erase(fluidNodes.begin()+ind);
+    //                    break;
+    //                }
+    //            }
+    //        }
+    //        else if (types[newSolidNodes[it]].isInterface()) {
+    //            for (int ind=interfaceNodes.size()-1; ind>=0; --ind) {
+    //                if (newSolidNodes[it]==interfaceNodes[ind]) {
+    //                    interfaceNodes.erase(interfaceNodes.begin()+ind);
+    //                    break;
+    //                }
+    //            }
+    //        }
+    //    }
+    //    // initializing type for new solid nodes and redistributing mass in case of interface
+    //    for (int it=0; it<newSolidNodes.size(); ++it) {
+    //        // index of new solid node
+    //        unsigned int index=newSolidNodes[it];
+    //        massSurplus+=nodes[index]->mass;
+    //        // initializing type
+    //        types[index].setParticle();
+    //    }
+    //
+    //    // NEW SOLID NODES - Initialization ///////////////////////////////////////////////////////////
+    //    for (int it=0; it<newSolidNodes.size(); ++it) {
+    //        unsigned int index=newSolidNodes[it];
+    ////        cout<<nodes[index].x<<" "<<nodes[index].y<<" "<<nodes[index].z<<" NEW SOLID NODE from absorption\n";
+    //        // reset velocity and mass (useful for plotting)
+    //        nodes[index]->n=0.0;
+    //        nodes[index]->visc=0.0;
+    //        nodes[index]->u.reset();
+    //        nodes[index]->mass=0.0;
+    //        nodes[index]->shearRate=0.0;
+    ////        nodes[index].force.reset();
+    //
+    //        // solid index is added in the movement function
+    //    }
+    
 }
 
 // other functions
 
 void LB::evolveBoundary() {
     // makes a boundary change, by switching gas and solid nodes
-
+    
     unsIntList gassificationNodes;
     gassificationNodes.clear();
     if (time>0.0) {
         static double vel=(0.15/1.5)/unit.Speed;
         double height=1.0+vel*double(time);
-    //    cout<<"height = "<<height<<"\t";
-
+        //    cout<<"height = "<<height<<"\t";
+        
         for (int it=0; it<nodes.size(); ++it) {
             if (types[it].isWall()) {
                 if ((getX(it)!=lbSize[2]-1)&&(getZ(it)!=0)&&
-                     (getY(it)!=lbSize[1]-1)&&(getY(it)!=0)&&
-                     (getX(it)!=lbSize[0]-1)&&(getX(it)!=0)) {
+                        (getY(it)!=lbSize[1]-1)&&(getY(it)!=0)&&
+                        (getX(it)!=lbSize[0]-1)&&(getX(it)!=0)) {
                     if (getZ(it)<height) {
                         gassificationNodes.push_back(it);
                     }
@@ -2250,40 +2250,40 @@ void LB::evolveBoundary() {
 void LB::gassification(unsIntList& gassificationNodes) {
     unsIntList newInterfaceNodes;
     newInterfaceNodes.clear();
-//    cout<<"gasify "<<gassificationNodes.size()<<"nodes\n";
-
+    //    cout<<"gasify "<<gassificationNodes.size()<<"nodes\n";
+    
     for (int it =0; it<gassificationNodes.size(); ++it) {
         types[gassificationNodes[it]].setGas();
     }
-
+    
     // NEW GAS NODES - Initialization  ////////////////////////////////////////////////////////////
     for (int it=0; it<gassificationNodes.size(); ++it) {
         unsigned int index=gassificationNodes[it];
         for (int j=0; j<lbmDirec; ++j) {
             unsigned int link=neighbors[index].d[j];
             if (types[link].isFluid()) {
-//                cout<<nodes[link].x<<" "<<nodes[link].y<<" "<<nodes[link].z<<" NEW INTERFACE NODE from fluid\n";
+                //                cout<<nodes[link].x<<" "<<nodes[link].y<<" "<<nodes[link].z<<" NEW INTERFACE NODE from fluid\n";
                 types[link].setInterface();
                 newInterfaceNodes.push_back(link);
                 // characteristics are inherited by previous fluid cell. Only mass must be updated
                 nodes[link]->mass=0.99*nodes[link]->n;
                 // let's forget for the moment the mass update
-//                massSurplus+=0.01*nodes[link].n;
+                //                massSurplus+=0.01*nodes[link].n;
                 for (int ind=fluidNodes.size()-1; ind>=0; --ind) {
-                if (link==fluidNodes[ind]) {
-                    fluidNodes.erase(fluidNodes.begin()+ind);
-                    break;
+                    if (link==fluidNodes[ind]) {
+                        fluidNodes.erase(fluidNodes.begin()+ind);
+                        break;
+                    }
                 }
-            }
             }
         }
     }
     // initializing new interface nodes type
     for (int it=0; it<newInterfaceNodes.size(); ++it) {
         // isn't this already done? check!
-            types[newInterfaceNodes[it]].setInterface();
+        types[newInterfaceNodes[it]].setInterface();
     }
-
+    
     // resetting new gas macroscopic quantities and updating neighbors for gas cells
     for (int it=0; it<gassificationNodes.size(); ++it) {
         bool isNotInterface=true;
@@ -2302,69 +2302,69 @@ void LB::gassification(unsIntList& gassificationNodes) {
     for (int it=0; it<newInterfaceNodes.size(); ++it) {
         interfaceNodes.push_back(newInterfaceNodes[it]);
     }
-//    // distributing surplus to interface cells
-//    double addMass=massSurplus/interfaceNodes.size();
-//    for (int it=0; it<newInterfaceNodes.size(); ++it) {
-//        nodes[newInterfaceNodes[it]].massFunction+=addMass;
-//    }
+    //    // distributing surplus to interface cells
+    //    double addMass=massSurplus/interfaceNodes.size();
+    //    for (int it=0; it<newInterfaceNodes.size(); ++it) {
+    //        nodes[newInterfaceNodes[it]].massFunction+=addMass;
+    //    }
 }
 
 // functions for index management
 
 tVect LB::setPosition(const unsigned int& index) const {
     unsigned int x,y,z;
-
+    
     // index is calculated in this fashion:
     // index = x + y*X + z*X*Y
     // where X and Y are sizes of the lattice in x and y direction
-
+    
     // from this stems that
     // x + y*X = index MOD X*Y
     // x = x + y*X MOD X
     // y = x + y*X DIV X
     // z = index DIV X*Y
-
+    
     // see online documentation for class div_t (stdlib.h)
     div_t firstDiv, secondDiv;
-
+    
     firstDiv=div(int(index), int(lbSize[0]*lbSize[1]));
     secondDiv=div(firstDiv.rem, int(lbSize[0]));
-
+    
     x=secondDiv.rem;
     y=secondDiv.quot;
     z=firstDiv.quot;
-
+    
     return tVect(double(x), double(y), double(z));
 }
 
 unsigned int LB::getX(const unsigned int& index) const {
-
+    
     // see function getPosition for documentation
     div_t firstDiv, secondDiv;
-
+    
     firstDiv=div(int(index), int(lbSize[0]*lbSize[1]));
     secondDiv=div(firstDiv.rem, int(lbSize[0]));
-
+    
     return secondDiv.rem;
 }
 
 unsigned int LB::getY(const unsigned int& index) const {
-
+    
     // see function getPosition for documentation
     div_t firstDiv, secondDiv;
-
+    
     firstDiv=div(int(index), int(lbSize[0]*lbSize[1]));
     secondDiv=div(firstDiv.rem, int(lbSize[0]));
-
+    
     return secondDiv.quot;
 }
 
 unsigned int LB::getZ(const unsigned int& index) const {
-
+    
     // see function getPosition for documentation
     div_t firstDiv;
-
+    
     firstDiv=div(int(index), int(lbSize[0]*lbSize[1]));
-
+    
     return firstDiv.quot;
 }

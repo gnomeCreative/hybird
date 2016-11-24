@@ -200,6 +200,8 @@ class object{
 public:
     // object index
     unsigned int index;
+    // original object index in case of copies
+    unsigned int originalIndex;
     // particle radius
     double r;
     // position of the object
@@ -210,6 +212,7 @@ public:
     tVect FParticle;
     object() {
         index=0;
+        originalIndex=0;
         r=0.0;
         x0=tVect(0.0,0.0,0.0);
         x1=tVect(0.0,0.0,0.0);

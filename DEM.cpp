@@ -7,19 +7,19 @@
 using namespace std;
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////////////
-// PUBLIC FUNCTIONS
-//////////////////////////////////////////////////////////////////////////////////////////////////////*/
+ // PUBLIC FUNCTIONS
+ //////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
 void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
     // getting material properties
     PARSE_CLASS_MEMBER(lbmCfgFile, sphereMat.density, "density",1.0);
     ASSERT(sphereMat.density>0.0);
-
+    
     string contactModelString;
     PARSE_CLASS_MEMBER(lbmCfgFile, contactModelString, "contactModel","none");
     if (contactModelString=="HERTZIAN") sphereMat.contactModel=HERTZIAN;
     else if (contactModelString=="LINEAR") sphereMat.contactModel=LINEAR;
-
+    
     
     // Hertzian contact model /////////////
     PARSE_CLASS_MEMBER(lbmCfgFile, sphereMat.youngMod, "youngMod",1.0);
@@ -30,11 +30,11 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
     sphereMat.knConst=2.0/3.0*sphereMat.youngMod/(1-sphereMat.poisson*sphereMat.poisson);
     // there was a bracket mistake here
     sphereMat.ksConst=2.0*sphereMat.youngMod/(2.0-sphereMat.poisson)/(1.0+sphereMat.poisson);
-
+    
     // linear contact model /////////////
     PARSE_CLASS_MEMBER(lbmCfgFile, sphereMat.linearStiff, "linearStiff",1.0);
     ASSERT(sphereMat.linearStiff>=0.0);
-
+    
     // normal damping ///////////////////////
     PARSE_CLASS_MEMBER(lbmCfgFile, sphereMat.restitution, "restitution",1.0);
     ASSERT(sphereMat.restitution>0.0);
@@ -58,7 +58,7 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
     ASSERT(sphereMat.frictionCoefPart>=0.0);
     PARSE_CLASS_MEMBER(lbmCfgFile, sphereMat.frictionCoefWall, "frictionCoefWall",1.0);
     ASSERT(sphereMat.frictionCoefWall>=0.0);
-
+    
     // particle initial state //////////////////////
     string particleFile;
     PARSE_CLASS_MEMBER(lbmCfgFile, particleFile, "particleFile","particles.dat");
@@ -69,14 +69,14 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
     tVect translate(translateX,translateY,translateZ);
     double scale=1.0;
     PARSE_CLASS_MEMBER(lbmCfgFile, scale, "scale",1.0);
-
+    
     ifstream particleFileID;
     particleFileID.open(particleFile.c_str(),ios::in);
     ASSERT(particleFileID.is_open());
-
+    
     unsigned int totElmt;
     particleFileID>>totElmt;
-
+    
     for (int n=0; n<totElmt; ++n) {
         elmt dummyElmt;
         
@@ -124,22 +124,22 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
         elmts.push_back(dummyElmt);
         
     }
-
+    
     // objects initial state //////////////////////
     string objectFile;
     PARSE_CLASS_MEMBER(lbmCfgFile, objectFile, "objectFile","objects.dat");
     ifstream objectFileID;
     objectFileID.open(objectFile.c_str(),ios::in);
     ASSERT(objectFileID.is_open());
-
+    
     unsigned int totObjects;
     objectFileID>>totObjects;
-
+    
     for (int n=0; n<totObjects; ++n) {
         object dummyObject;
         
         double size; //dummy, just to use same style
-
+        
         // import variables
         objectFileID>>dummyObject.index;
         objectFileID>>size; // must be one
@@ -167,7 +167,7 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
         objectFileID>>trash;
         objectFileID>>trash;
         objectFileID>>trash;
-
+        dummyObject.originalIndex=dummyObject.index;
         objects.push_back(dummyObject);
     }
     
@@ -178,20 +178,20 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
     PARSE_CLASS_MEMBER(lbmCfgFile, multiStep, "multiStep",1);
     // set ratio between time step and estimated duration of contacts (only if multiStep=0)
     PARSE_CLASS_MEMBER(lbmCfgFile, criticalRatio, "criticalRatio",0.1);
-
+    
 }
 
 void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureUnits& unit, tVect& lbF){
-
+    
     // initializing DEM parameters from lattice parameters
-
+    
     // domain size is the same of LBM. This is expressed in lattice coordinates
     demSize[0]=double(lbSize[0])*unit.Length;
     demSize[1]=double(lbSize[1])*unit.Length;
     demSize[2]=double(lbSize[2])*unit.Length;
     // acceleration field
     demF=lbF*unit.Accel;
-
+    
     // DEM time step
     // if multistep is 0, it should be calculated by the program here
     if (elmts.size()) {
@@ -220,16 +220,16 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
         deltat=unit.Time;
         multiStep=1;
     }
-
-
+    
+    
     // initializing particles
     const double partDensity=sphereMat.density;
-
+    
     // initializing composite particle properties
     compositeProperties();
     // clear particle list
     particles.clear();
-
+    
     unsigned int globalIndex=0;
     for (int n=0; n<elmts.size(); ++n){
         // initialize element
@@ -239,7 +239,7 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
     }
     // the number of standard particles (=not ghosts) is now fixed, and WILL NOT BE CHANGED
     stdParticles=particles.size();
-
+    
     // initializing wall for DEM
     initializeWalls(boundary, lbSize, unit);
     // initializing cylinders for DEM
@@ -249,20 +249,20 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
     
     // used to get tot number of objects for CG (coarse graining)
     stdObjects=objects.size();  
-
+    
     // initialize neighbor list parameters (also sets ghosts)
     if (elmts.size()) {
         initNeighborParameters();
         periodicObjects();
         evalNeighborTable();
     }
-
+    
     double totMass=0.0;
     for (int n=0; n<elmts.size(); ++n){
         // calculate mass
         totMass+=elmts[n].m;
     }
-
+    
     cout<<"DEM parameters\n";
     cout<<"domain size: xdim ="<<demSize[0]<<"; ydim= "<<demSize[1]<<"; zdim= "<<demSize[2]<<";\n";
     cout<<"Tot elements: "<<elmts.size()<<";\t";
@@ -274,7 +274,7 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
     else {
         cout<<"Deltat ="<<deltat<<", by imposing "<<multiStep<<" substeps"<<endl;
     }
-        
+    
     cout<<"Total mass ="<<totMass<<endl;
     switch (sphereMat.contactModel) {
         case LINEAR: {
@@ -294,10 +294,10 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
 }
 
 void DEM::discreteElementStep(IO& io){
-
+    
     // set trigger for new neighbor list
     double neighListTrigger=0.25*nebrRange;
-
+    
     for (int demIter=0; demIter<multiStep; ++demIter) {
         
         // neighbor management
@@ -307,71 +307,71 @@ void DEM::discreteElementStep(IO& io){
             //cout<<"new neighbor list"<<endl;
             evalNeighborTable();
         }
-
+        
         // predictor step
         predictor();
-
+        
         // particles generation
 	updateParticlesPredicted();
         
         // the statement below makes sure that .restart and .data are saved every multiple of saveCount
         if (io.saveCount!=0 && io.currentTimeStep % io.saveCount==0){  
-        // export .data and .restart file
+            // export .data and .restart file
             exportDataFile(io);
             exportRestartFile(io);
         }
 	
 	// force evaluation
         evaluateForces(io);
-
+        
         // corrector step
         corrector();
-
+        
         // particles re-generation
 	updateParticlesCorrected();
-
+        
         // updating energy
         updateEnergy();
-
+        
     }
-
+    
 }
 
 void DEM::evolveBoundaries(){
-
+    
     double frac=1.0/demInitialRepeat/((double)multiStep);
-//    cout<<"frac="<<frac<<"\n";
-
+    //    cout<<"frac="<<frac<<"\n";
+    
     for (int n=0; n<walls.size(); ++n) {
         
         if (walls[n].translating) {
             walls[n].p=walls[n].p+frac*walls[n].trans;
             
             if (n==1) {
-//            walls[n].p.show();
-//            cout<<"\n";
+                //            walls[n].p.show();
+                //            cout<<"\n";
             }
         }
     }
-
+    
     evalNeighborTable();
 }
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////////////
-// PRIVATE FUNCTIONS
-//////////////////////////////////////////////////////////////////////////////////////////////////////*/
+ // PRIVATE FUNCTIONS
+ //////////////////////////////////////////////////////////////////////////////////////////////////////*/
 
 // initialization functions
 
 void DEM::compositeProperties() {
-
+    
     vecList prototype1,prototype2, prototype3, prototype4;
-
-
-     // prototypes for shapes
+    
+    
+    // prototypes for shapes
     // every vector defines the position of a particle in the object reference frame
     // unit is radius
-
+    
     prototypes.resize(5);
     prototype1.resize(1);
     prototype1[0].reset();
@@ -391,7 +391,7 @@ void DEM::compositeProperties() {
     prototype4[2]=tVect(2.0*sqrt(6)/6.0,-2.0*sqrt(2)/6.0,-1.0/3.0);
     prototype4[3]=tVect(-2.0*sqrt(6)/6.0,-2.0*sqrt(2)/6.0,-1.0/3.0);
     prototypes[4]=prototype4;
-
+    
 }
 
 void DEM::initializeWalls(unsIntList& boundary, unsIntList& lbSize, measureUnits& unit) {
@@ -399,7 +399,7 @@ void DEM::initializeWalls(unsIntList& boundary, unsIntList& lbSize, measureUnits
     wall dummyWall;
     unsigned int index=0;
     double boxVel=0.15/1.5;
-
+    
     // wall #0
     if ((boundary[0]==5)||(boundary[0]==6)||(boundary[0]==7)||(boundary[0]==8)) {
         dummyWall.p=tVect(0.5*unit.Length,0.0,0.0);
@@ -613,133 +613,133 @@ void DEM::initializeWalls(unsIntList& boundary, unsIntList& lbSize, measureUnits
             dummyWall.translating=false;
             ++index;
             walls.push_back(dummyWall);
-
-//            dummyWall.p=tVect((double(lbSize[0])-1.5)*unit.Length,0.0,35.0*unit.Length);
-//            dummyWall.n=tVect(-0.087156,0.0,0.996195);
-//            dummyWall.index=index;
-//            dummyWall.flag=false;
-//            dummyWall.moving=false;
-//            dummyWall.rotCenter.reset();
-//            dummyWall.omega.reset();
-//            dummyWall.vel.reset();
-//            dummyWall.translating=false;
-//            ++index;
-//            walls.push_back(dummyWall);
+            
+            //            dummyWall.p=tVect((double(lbSize[0])-1.5)*unit.Length,0.0,35.0*unit.Length);
+            //            dummyWall.n=tVect(-0.087156,0.0,0.996195);
+            //            dummyWall.index=index;
+            //            dummyWall.flag=false;
+            //            dummyWall.moving=false;
+            //            dummyWall.rotCenter.reset();
+            //            dummyWall.omega.reset();
+            //            dummyWall.vel.reset();
+            //            dummyWall.translating=false;
+            //            ++index;
+            //            walls.push_back(dummyWall);
             break;
         }
         case BOX: {
-//            // xMin
-//            dummyWall.p=Tvect((30.0+0.5)*unit.Length,0.0,0.0);
-//            dummyWall.n=Tvect(1.0,0.0,0.0);
-//            dummyWall.index=index;
-//            dummyWall.flag=true;
-//            dummyWall.moving=true;
-//            dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
-//            dummyWall.omega=Tvect(0.0,0.0,0.0);
-//            dummyWall.vel=Tvect(0.0,0.0,boxVel);
-//            dummyWall.translating=true;
-//            dummyWall.trans=Tvect((20.0)*unit.Length,0.0,0.0);
-//            ++index;
-//            walls.push_back(dummyWall);
-//
-//        //    dummyWall.p=Tvect((50.0-1.5)*unit.Length,0.0,0.0);
-//        //    dummyWall.n=Tvect(-1.0,0.0,0.0);
-//        //    dummyWall.index=index;
-//        //    dummyWall.flag=true;
-//        //    dummyWall.moving=true;
-//        //    dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
-//        //    dummyWall.omega=Tvect(0.0,0.0,0.0);
-//        //    dummyWall.vel=Tvect(0.0,0.0,boxVel);
-//        //    ++index;
-//        //    walls.push_back(dummyWall);
-//
-//            // xMax
-//        //    dummyWall.p=Tvect((125.0-0.5)*unit.Length,0.0,0.0);
-//        //    dummyWall.n=Tvect(1.0,0.0,0.0);
-//        //    dummyWall.index=index;
-//        //    dummyWall.flag=true;
-//        //    dummyWall.moving=true;
-//        //    dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
-//        //    dummyWall.omega=Tvect(0.0,0.0,0.0);
-//        //    dummyWall.vel=Tvect(0.0,0.0,boxVel);
-//        //    ++index;
-//        //    walls.push_back(dummyWall);
-//
-//            dummyWall.p=Tvect((145.0-0.5)*unit.Length,0.0,0.0);
-//            dummyWall.n=Tvect(-1.0,0.0,0.0);
-//            dummyWall.index=index;
-//            dummyWall.flag=true;
-//            dummyWall.moving=true;
-//            dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
-//            dummyWall.omega=Tvect(0.0,0.0,0.0);
-//            dummyWall.vel=Tvect(0.0,0.0,boxVel);
-//            dummyWall.translating=true;
-//            dummyWall.trans=Tvect((-20.0)*unit.Length,0.0,0.0);
-//            ++index;
-//            walls.push_back(dummyWall);
-//
-//            // yMin
-//            dummyWall.p=Tvect(0.0,(68.0+0.5)*unit.Length,0.0);
-//            dummyWall.n=Tvect(0.0,1.0,0.0);
-//            dummyWall.index=index;
-//            dummyWall.flag=true;
-//            dummyWall.moving=true;
-//            dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
-//            dummyWall.omega=Tvect(0.0,0.0,0.0);
-//            dummyWall.vel=Tvect(0.0,0.0,boxVel);
-//            dummyWall.translating=true;
-//            dummyWall.trans=Tvect(0.0,(20.0)*unit.Length,0.0);
-//            ++index;
-//            walls.push_back(dummyWall);
-//
-//        //    dummyWall.p=Tvect(0.0,(88.0-1.5)*unit.Length,0.0);
-//        //    dummyWall.n=Tvect(0.0,-1.0,0.0);
-//        //    dummyWall.index=index;
-//        //    dummyWall.flag=true;
-//        //    dummyWall.moving=true;
-//        //    dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
-//        //    dummyWall.omega=Tvect(0.0,0.0,0.0);
-//        //    dummyWall.vel=Tvect(0.0,0.0,boxVel);
-//        //    ++index;
-//        //    walls.push_back(dummyWall);
-//
-//            // yMax
-//        //    dummyWall.p=Tvect(0.0,(162.0-0.5)*unit.Length,0.0);
-//        //    dummyWall.n=Tvect(0.0,1.0,0.0);
-//        //    dummyWall.index=index;
-//        //    dummyWall.flag=true;
-//        //    dummyWall.moving=true;
-//        //    dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
-//        //    dummyWall.omega=Tvect(0.0,0.0,0.0);
-//        //    dummyWall.vel=Tvect(0.0,0.0,boxVel);
-//        //    ++index;
-//        //    walls.push_back(dummyWall);
-//
-//            dummyWall.p=Tvect(0.0,(182.0-0.5)*unit.Length,0.0);
-//            dummyWall.n=Tvect(0.0,-1.0,0.0);
-//            dummyWall.index=index;
-//            dummyWall.flag=true;
-//            dummyWall.moving=true;
-//            dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
-//            dummyWall.omega=Tvect(0.0,0.0,0.0);
-//            dummyWall.vel=Tvect(0.0,0.0,boxVel);
-//            dummyWall.translating=true;
-//            dummyWall.trans=Tvect(0.0,(-20.0)*unit.Length,0.0);
-//            ++index;
-//            walls.push_back(dummyWall);
-//
-//            dummyWall.p=Tvect(0.0,0.0,(70.0-0.5)*unit.Length);
-//            dummyWall.n=Tvect(0.0,0.0,-1.0);
-//            dummyWall.index=index;
-//            dummyWall.flag=true;
-//            dummyWall.moving=true;
-//            dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
-//            dummyWall.omega=Tvect(0.0,0.0,0.0);
-//            dummyWall.vel=Tvect(0.0,0.0,0.0);
-//            dummyWall.translating=true;
-//            dummyWall.trans=Tvect(0.0,0.0,0.0);
-//            ++index;
-//            walls.push_back(dummyWall);
+            //            // xMin
+            //            dummyWall.p=Tvect((30.0+0.5)*unit.Length,0.0,0.0);
+            //            dummyWall.n=Tvect(1.0,0.0,0.0);
+            //            dummyWall.index=index;
+            //            dummyWall.flag=true;
+            //            dummyWall.moving=true;
+            //            dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
+            //            dummyWall.omega=Tvect(0.0,0.0,0.0);
+            //            dummyWall.vel=Tvect(0.0,0.0,boxVel);
+            //            dummyWall.translating=true;
+            //            dummyWall.trans=Tvect((20.0)*unit.Length,0.0,0.0);
+            //            ++index;
+            //            walls.push_back(dummyWall);
+            //
+            //        //    dummyWall.p=Tvect((50.0-1.5)*unit.Length,0.0,0.0);
+            //        //    dummyWall.n=Tvect(-1.0,0.0,0.0);
+            //        //    dummyWall.index=index;
+            //        //    dummyWall.flag=true;
+            //        //    dummyWall.moving=true;
+            //        //    dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
+            //        //    dummyWall.omega=Tvect(0.0,0.0,0.0);
+            //        //    dummyWall.vel=Tvect(0.0,0.0,boxVel);
+            //        //    ++index;
+            //        //    walls.push_back(dummyWall);
+            //
+            //            // xMax
+            //        //    dummyWall.p=Tvect((125.0-0.5)*unit.Length,0.0,0.0);
+            //        //    dummyWall.n=Tvect(1.0,0.0,0.0);
+            //        //    dummyWall.index=index;
+            //        //    dummyWall.flag=true;
+            //        //    dummyWall.moving=true;
+            //        //    dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
+            //        //    dummyWall.omega=Tvect(0.0,0.0,0.0);
+            //        //    dummyWall.vel=Tvect(0.0,0.0,boxVel);
+            //        //    ++index;
+            //        //    walls.push_back(dummyWall);
+            //
+            //            dummyWall.p=Tvect((145.0-0.5)*unit.Length,0.0,0.0);
+            //            dummyWall.n=Tvect(-1.0,0.0,0.0);
+            //            dummyWall.index=index;
+            //            dummyWall.flag=true;
+            //            dummyWall.moving=true;
+            //            dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
+            //            dummyWall.omega=Tvect(0.0,0.0,0.0);
+            //            dummyWall.vel=Tvect(0.0,0.0,boxVel);
+            //            dummyWall.translating=true;
+            //            dummyWall.trans=Tvect((-20.0)*unit.Length,0.0,0.0);
+            //            ++index;
+            //            walls.push_back(dummyWall);
+            //
+            //            // yMin
+            //            dummyWall.p=Tvect(0.0,(68.0+0.5)*unit.Length,0.0);
+            //            dummyWall.n=Tvect(0.0,1.0,0.0);
+            //            dummyWall.index=index;
+            //            dummyWall.flag=true;
+            //            dummyWall.moving=true;
+            //            dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
+            //            dummyWall.omega=Tvect(0.0,0.0,0.0);
+            //            dummyWall.vel=Tvect(0.0,0.0,boxVel);
+            //            dummyWall.translating=true;
+            //            dummyWall.trans=Tvect(0.0,(20.0)*unit.Length,0.0);
+            //            ++index;
+            //            walls.push_back(dummyWall);
+            //
+            //        //    dummyWall.p=Tvect(0.0,(88.0-1.5)*unit.Length,0.0);
+            //        //    dummyWall.n=Tvect(0.0,-1.0,0.0);
+            //        //    dummyWall.index=index;
+            //        //    dummyWall.flag=true;
+            //        //    dummyWall.moving=true;
+            //        //    dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
+            //        //    dummyWall.omega=Tvect(0.0,0.0,0.0);
+            //        //    dummyWall.vel=Tvect(0.0,0.0,boxVel);
+            //        //    ++index;
+            //        //    walls.push_back(dummyWall);
+            //
+            //            // yMax
+            //        //    dummyWall.p=Tvect(0.0,(162.0-0.5)*unit.Length,0.0);
+            //        //    dummyWall.n=Tvect(0.0,1.0,0.0);
+            //        //    dummyWall.index=index;
+            //        //    dummyWall.flag=true;
+            //        //    dummyWall.moving=true;
+            //        //    dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
+            //        //    dummyWall.omega=Tvect(0.0,0.0,0.0);
+            //        //    dummyWall.vel=Tvect(0.0,0.0,boxVel);
+            //        //    ++index;
+            //        //    walls.push_back(dummyWall);
+            //
+            //            dummyWall.p=Tvect(0.0,(182.0-0.5)*unit.Length,0.0);
+            //            dummyWall.n=Tvect(0.0,-1.0,0.0);
+            //            dummyWall.index=index;
+            //            dummyWall.flag=true;
+            //            dummyWall.moving=true;
+            //            dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
+            //            dummyWall.omega=Tvect(0.0,0.0,0.0);
+            //            dummyWall.vel=Tvect(0.0,0.0,boxVel);
+            //            dummyWall.translating=true;
+            //            dummyWall.trans=Tvect(0.0,(-20.0)*unit.Length,0.0);
+            //            ++index;
+            //            walls.push_back(dummyWall);
+            //
+            //            dummyWall.p=Tvect(0.0,0.0,(70.0-0.5)*unit.Length);
+            //            dummyWall.n=Tvect(0.0,0.0,-1.0);
+            //            dummyWall.index=index;
+            //            dummyWall.flag=true;
+            //            dummyWall.moving=true;
+            //            dummyWall.rotCenter=Tvect(0.0,0.0,0.0);
+            //            dummyWall.omega=Tvect(0.0,0.0,0.0);
+            //            dummyWall.vel=Tvect(0.0,0.0,0.0);
+            //            dummyWall.translating=true;
+            //            dummyWall.trans=Tvect(0.0,0.0,0.0);
+            //            ++index;
+            //            walls.push_back(dummyWall);
             break;
         }
         case DRUM: {
@@ -824,7 +824,7 @@ void DEM::initializeWalls(unsIntList& boundary, unsIntList& lbSize, measureUnits
             break;
         }
     }
-
+    
     for (int n=0; n<walls.size(); ++n) {
         walls[n].wallShow();
     }
@@ -833,7 +833,7 @@ void DEM::initializeWalls(unsIntList& boundary, unsIntList& lbSize, measureUnits
 void DEM::initializeCylinders() {
     cylinders.clear();
     unsigned int index=0;
-
+    
     switch (problemName) {
         case DRUM: {
             cylinder dummyCylinder;
@@ -862,18 +862,18 @@ void DEM::initializeCylinders() {
             cylinders.push_back(dummyCylinder);
             ++index;
             break;
-//            cylinder dummyCylinder;
-//            dummyCylinder.index=index;
-//            dummyCylinder.p1=tVect(0.0,10.0,14.86);
-//            dummyCylinder.p2=tVect(1.0,10.0,14.86);
-//            dummyCylinder.R=14.86;
-//            dummyCylinder.omega.reset();
-//            dummyCylinder.initAxes();
-//            dummyCylinder.moving=false;
-//            dummyCylinder.slip=false;
-//            cylinders.push_back(dummyCylinder);
-//            ++index;
-//            break;
+            //            cylinder dummyCylinder;
+            //            dummyCylinder.index=index;
+            //            dummyCylinder.p1=tVect(0.0,10.0,14.86);
+            //            dummyCylinder.p2=tVect(1.0,10.0,14.86);
+            //            dummyCylinder.R=14.86;
+            //            dummyCylinder.omega.reset();
+            //            dummyCylinder.initAxes();
+            //            dummyCylinder.moving=false;
+            //            dummyCylinder.slip=false;
+            //            cylinders.push_back(dummyCylinder);
+            //            ++index;
+            //            break;
         }
         case NET: {
             cylinder dummyCylinder;
@@ -890,18 +890,18 @@ void DEM::initializeCylinders() {
             break;
         }
     }
-
+    
     for (int n=0; n<cylinders.size(); ++n) {
         cylinders[n].cylinderShow();
     }
 }
 
 void DEM::initializePbcs(unsIntList& boundary, unsIntList& lbSize, measureUnits& unit) {
-
+    
     pbcs.clear();
     pbc dummyPbc;
     unsigned int index=0;
-
+    
     if (boundary[0]==4) {
         if (boundary[1]!=4) {
             cout<<"Periodic boundaries error!"<<endl;
@@ -950,45 +950,76 @@ void DEM::initializePbcs(unsIntList& boundary, unsIntList& lbSize, measureUnits&
 }
 
 void DEM::periodicObjects() {
+    
+    const unsigned int originalObjects=objects.size();
    
     // copy objects
-    unsigned int originalObjects=objects.size();
-    unsigned int objectIndex=objects.size()-1;
+    ghostList objectGhosts;
+    objectGhosts.clear();
+    
+    cout<<"Finding side object ghosts"<<endl;
     for (int b=0; b<pbcs.size(); ++b) {
         const tVect pbcVector=pbcs[b].v;
-        // cycle through elements
-        for (int o=0; o<objects.size(); ++o) {
+        // cycle through objects
+        for (int o=0; o<originalObjects; ++o) {
+            // distances from the periodic walls
             const double leftDist=pbcs[b].pl1.dist(objects[o].x0);
             const double rightDist=pbcs[b].pl2.dist(objects[o].x0);
-            if (leftDist<0.0) {
-                objectIndex++;
-                object dummyObject=objects[o];
-                dummyObject.x0=dummyObject.x0+pbcVector;
-                dummyObject.index=objectIndex;
-                objects.push_back(dummyObject);
+            //            ASSERT(leftDist>0);
+            //            ASSERT(rightDist>0)
+            // first plane of couple (left)
+            if (leftDist<2.0*nebrRange) {
+                ghost dummyGhost;
+                dummyGhost.ghostIndex=objects[o].index;
+                dummyGhost.pbcVector=pbcVector;
+                objectGhosts.push_back(dummyGhost);
             }
-            else if (leftDist<2.0*nebrRange && o<originalObjects) {
-                objectIndex++;
-                object dummyObject=objects[o];
-                dummyObject.x0=dummyObject.x0+pbcVector;
-                dummyObject.index=objectIndex;
-                objects.push_back(dummyObject);
+            // second plane of couple (right), we copy only one time
+            else if (rightDist<2.0*nebrRange) {
+                ghost dummyGhost;
+                dummyGhost.ghostIndex=objects[o].index;
+                dummyGhost.pbcVector=-1.0*pbcVector;
+                objectGhosts.push_back(dummyGhost);
             }
-            // second plane of couple (right)
-            if (rightDist<0.0) {
-                objectIndex++;
-                object dummyObject=objects[o];
-                dummyObject.x0=dummyObject.x0-pbcVector;
-                dummyObject.index=objectIndex;
-                objects.push_back(dummyObject);
+        }
+    }
+    cout<<"Found"<<objectGhosts.size()<<endl;
+    
+    // corner objects
+    cout<<"Finding corner object ghosts"<<endl;
+    ghostList cornerObjectsGhosts;
+    cornerObjectsGhosts.clear();
+    for (int og1=0; og1<objectGhosts.size(); ++og1) {
+        //cout<<"og1="<<og1<<endl;
+        for (int og2=og1+1; og2<objectGhosts.size(); ++og2) {
+            //cout<<"og2="<<og2<<"("<<objectGhosts[og1].ghostIndex<<" "<<objectGhosts[og2].ghostIndex<<")"<<endl;
+            if (objectGhosts[og1].ghostIndex==objectGhosts[og2].ghostIndex) {
+                // we need to create a corner ghost
+                ghost dummyGhost;
+                dummyGhost.ghostIndex=objectGhosts[og1].ghostIndex;
+                dummyGhost.pbcVector=objectGhosts[og1].pbcVector+objectGhosts[og2].pbcVector;
+                cornerObjectsGhosts.push_back(dummyGhost);
             }
-            else if (rightDist<2.0*nebrRange && o<originalObjects) {
-                objectIndex++;
-                object dummyObject=objects[o];
-                dummyObject.x0=dummyObject.x0-pbcVector;
-                dummyObject.index=objectIndex;
-                objects.push_back(dummyObject);
-            }
+        }
+    }
+    cout<<"Found"<<cornerObjectsGhosts.size()<<endl;
+    
+    
+    objectGhosts.insert(objectGhosts.end(), cornerObjectsGhosts.begin(), cornerObjectsGhosts.end());
+    
+    cout<<"Generating object ghosts"<<endl;
+    if (objectGhosts.size()!=0) {
+        // updating ghost particles
+        for (int og=0; og<objectGhosts.size(); ++og) {
+            //getting original particle index
+            const unsigned int originObjectIndex=objectGhosts[og].ghostIndex;
+            const unsigned int ghostObjectIndex=originalObjects+og;
+            // reconstructing ghost objects
+            object dummyObject=objects[originObjectIndex];
+            dummyObject.x0=dummyObject.x0+objectGhosts[og].pbcVector;
+            dummyObject.originalIndex=dummyObject.index;
+            dummyObject.index=ghostObjectIndex;
+            objects.push_back(dummyObject);
         }
     }
 }
@@ -998,17 +1029,17 @@ void DEM::periodicObjects() {
 void DEM::predictor() {
     static const double c1[5]={deltat, deltat*deltat/2.0, deltat*deltat*deltat/6.0, deltat*deltat*deltat*deltat/24.0, deltat*deltat*deltat*deltat*deltat/120.0};
     static const double c2[5]={deltat, deltat*deltat/2.0, deltat*deltat*deltat/6.0, deltat*deltat*deltat*deltat/24.0, deltat*deltat*deltat*deltat*deltat/120.0};
-//    c[0] = deltat;
-//    c[1] = c[0] * deltat / 2.0;
-//    c[2] = c[1] * deltat / 3.0;
-//    c[3] = c[2] * deltat / 4.0;
-//    c[4] = c[3] * deltat / 5.0;
-
-    #pragma omp parallel for
+    //    c[0] = deltat;
+    //    c[1] = c[0] * deltat / 2.0;
+    //    c[2] = c[1] * deltat / 3.0;
+    //    c[3] = c[2] * deltat / 4.0;
+    //    c[4] = c[3] * deltat / 5.0;
+    
+#pragma omp parallel for
     for (int n=0; n<elmts.size(); ++n) {
         elmts[n].predict(c1,c2);
     }
- }
+}
 
 void DEM::corrector() {
     //static double gear[6] = {3.0/16.0, 251.0/360.0, 1.0, 11.0/18.0, 1.0/6.0, 1.0/60.0};
@@ -1019,7 +1050,7 @@ void DEM::corrector() {
     // see: Computer Simulation of Liquids By M. P. Allen, D. J. Tildesle 
     static const double gear1ord[6] = {95.0/288.0, 1.0, 25.0/24.0, 35.0/72.0, 5.0/48.0, 1.0/120.0};      // coefficients for a first-order equation 
     static const double gear2ord[6] = {3.0/16.0, 251.0/360.0, 1.0, 11.0/18.0, 1.0/6.0, 1.0/60.0};        // coefficients for a second-order equation
-      
+    
     static const double c[5]={deltat, deltat*deltat/2.0, deltat*deltat*deltat/6.0, deltat*deltat*deltat*deltat/24.0, deltat*deltat*deltat*deltat*deltat/120.0};
     // Careful the c's must be changed for eq of 1st order
     static const double coeff1ord[6]={gear1ord[0]*c[0], gear1ord[1]*c[0]/c[0], gear1ord[2]*c[0]/c[1], gear1ord[3]*c[0]/c[2], gear1ord[4]*c[0]/c[3], gear1ord[5]*c[0]/c[4]};
@@ -1027,34 +1058,34 @@ void DEM::corrector() {
     static const double coeff2ord[6]={gear2ord[0]*c[1], gear2ord[1]*c[1]/c[0], gear2ord[2]*c[1]/c[1], gear2ord[3]*c[1]/c[2], gear2ord[4]*c[1]/c[3], gear2ord[5]*c[1]/c[4]};
     
     
-//    doubleList coeff;
-//    coeff.resize(6);
-//    coeff[0]=gear[0]*c[1];
-//    coeff[1]=gear[1]*c[1]/c[0];
-//    coeff[2]=gear[2]*c[1]/c[1];
-//    coeff[3]=gear[3]*c[1]/c[2];
-//    coeff[4]=gear[4]*c[1]/c[3];
-//    coeff[5]=gear[5]*c[1]/c[4];
-
-    #pragma omp parallel for
+    //    doubleList coeff;
+    //    coeff.resize(6);
+    //    coeff[0]=gear[0]*c[1];
+    //    coeff[1]=gear[1]*c[1]/c[0];
+    //    coeff[2]=gear[2]*c[1]/c[1];
+    //    coeff[3]=gear[3]*c[1]/c[2];
+    //    coeff[4]=gear[4]*c[1]/c[3];
+    //    coeff[5]=gear[5]*c[1]/c[4];
+    
+#pragma omp parallel for
     for (int n=0; n<elmts.size(); n++) {
         elmts[n].correct(coeff1ord,coeff2ord);
     }
 }
 
 void DEM::evaluateForces(IO& io) {
-
+    
     for (int n=0; n<elmts.size(); ++n) {
         elmts[n].FParticle.reset();
         elmts[n].FWall.reset();
         elmts[n].MParticle.reset();
         elmts[n].MWall.reset();
     }
-
+    
     for (int w=0; w<walls.size(); ++w) {
         walls[w].FParticle.reset();
     }
-
+    
     for (int o=0; o<objects.size(); ++o) {
         objects[o].FParticle.reset();
     }
@@ -1063,7 +1094,7 @@ void DEM::evaluateForces(IO& io) {
         // Open statistic file and print header
         printHeaderStatFile(io);    
     }    
-
+    
     // forces due to particle overlap and lubrication
     particleParticleContacts(io);
     // forces due to contact with plane walls and lubrication
@@ -1075,20 +1106,20 @@ void DEM::evaluateForces(IO& io) {
     
     // close file here to be able to append the data from next saving
     io.statParticleFile.close();
-
+    
     //  Newton equations solution
     for (int n=0; n<elmts.size(); ++n) {
-
+        
         // numerical viscosity for stability
         // see "Viscous torque on a sphere under arbitrary rotation" by Lei,  Yang, and Wu, Applied Physics Letters 89, 181908 (2006)
         const tVect FVisc=-6.0*M_PI*numVisc*elmts[n].radius*elmts[n].xp1;
         const tVect MVisc=-8.0*M_PI*numVisc*elmts[n].radius*elmts[n].radius*elmts[n].radius*elmts[n].wpGlobal;
-
+        
         
         // translational motion
         // acceleration
         elmts[n].x2=(FVisc+elmts[n].FHydro+elmts[n].FParticle+elmts[n].FWall)/elmts[n].m + demF;
-
+        
         // rotational motion
         // adjoint of orientation quaternion
         //const tQuat q0adj=elmts[n].qp0.adjoint();
@@ -1113,54 +1144,54 @@ void DEM::evaluateForces(IO& io) {
 }
 
 void DEM::updateParticlesPredicted() {
-	// this subroutine assumes that there is no change in the structure of the particles
-	// any creation, deletion or reorganization of particles requires a different subroutine
-
-	//    #pragma omp parallel for
-	for (int p=0; p<stdParticles; ++p) {
-            //getting belonging element index
-            const unsigned int clusterIndex=particles[p].clusterIndex;
-            particles[p].updatePredicted(elmts[clusterIndex],prototypes);
-	}
-	if (ghosts.size()!=0) {
-            // updating ghost particles
-            for (int g=0; g<ghosts.size(); ++g) {
-                //getting original particle index
-                const unsigned int originParticleIndex=ghosts[g].ghostIndex;
-                const unsigned int ghostParticleIndex=stdParticles+g;
-                // reconstructing ghost particle
-                particles[ghostParticleIndex].ghostUpdate(particles[originParticleIndex], ghosts[g].pbcVector);
-            }
-	}
+    // this subroutine assumes that there is no change in the structure of the particles
+    // any creation, deletion or reorganization of particles requires a different subroutine
+    
+    //    #pragma omp parallel for
+    for (int p=0; p<stdParticles; ++p) {
+        //getting belonging element index
+        const unsigned int clusterIndex=particles[p].clusterIndex;
+        particles[p].updatePredicted(elmts[clusterIndex],prototypes);
+    }
+    if (ghosts.size()!=0) {
+        // updating ghost particles
+        for (int g=0; g<ghosts.size(); ++g) {
+            //getting original particle index
+            const unsigned int originParticleIndex=ghosts[g].ghostIndex;
+            const unsigned int ghostParticleIndex=stdParticles+g;
+            // reconstructing ghost particle
+            particles[ghostParticleIndex].ghostUpdate(particles[originParticleIndex], ghosts[g].pbcVector);
+        }
+    }
 }
 
 void DEM::updateParticlesCorrected() {
-	// this subroutine assumes that there is no change in the structure of the particles
-	// any creation, deletion or reorganization of particles requires a different subroutine
-
-	//    #pragma omp parallel for
-	for (int p=0; p<stdParticles; ++p) {
-            //getting belonging element index
-            const unsigned int clusterIndex=particles[p].clusterIndex;
-            particles[p].updateCorrected(elmts[clusterIndex],prototypes);
-	}
-
-	if (ghosts.size()!=0) {
-            // updating ghost particles
-            for (int g=0; g<ghosts.size(); ++g) {
-                //getting original particle index
-                const unsigned int originParticleIndex=ghosts[g].ghostIndex;
-                const unsigned int ghostParticleIndex=stdParticles+g;
-                // reconstructing ghost particle
-                particles[ghostParticleIndex].ghostUpdate(particles[originParticleIndex], ghosts[g].pbcVector);
-            }
-	}
+    // this subroutine assumes that there is no change in the structure of the particles
+    // any creation, deletion or reorganization of particles requires a different subroutine
+    
+    //    #pragma omp parallel for
+    for (int p=0; p<stdParticles; ++p) {
+        //getting belonging element index
+        const unsigned int clusterIndex=particles[p].clusterIndex;
+        particles[p].updateCorrected(elmts[clusterIndex],prototypes);
+    }
+    
+    if (ghosts.size()!=0) {
+        // updating ghost particles
+        for (int g=0; g<ghosts.size(); ++g) {
+            //getting original particle index
+            const unsigned int originParticleIndex=ghosts[g].ghostIndex;
+            const unsigned int ghostParticleIndex=stdParticles+g;
+            // reconstructing ghost particle
+            particles[ghostParticleIndex].ghostUpdate(particles[originParticleIndex], ghosts[g].pbcVector);
+        }
+    }
 }
 
 double DEM::criticalTimeStep() const {
     // determines the critical time step based on the stiffness and mass of the elements
     // we use YADE documentation, see https://yade-dem.org/doc/formulation.html
-
+    
     double minRad=elmts[0].radius;
     double minMass=elmts[0].m;
     for (int n=0; n<elmts.size(); ++n) {
@@ -1171,10 +1202,10 @@ double DEM::criticalTimeStep() const {
         minRad=std::min(minRad,elmts[n].radius);
         minMass=std::min(minMass,elmts[n].m);
     }
-
-
+    
+    
     // double const k=8.0/15.0*sphereMat.youngMod/(1-sphereMat.poisson*sphereMat.poisson)*sqrt(minRad);
-
+    
     double deltaTCrit=0.0;
     switch (sphereMat.contactModel) {
         case HERTZIAN: {
@@ -1202,7 +1233,7 @@ double DEM::criticalTimeStep() const {
 
 void DEM::initNeighborParameters() {
     // initializes all parameters useful for neighbor list algorithm
-
+    
     cout<<"Initialize neighbor list\n";
     // maximum radius
     double maxRad=0.0;
@@ -1211,7 +1242,7 @@ void DEM::initNeighborParameters() {
             maxRad=elmts[i].radius;
         }
     }
-
+    
     // if there are no particles, just to avoid nonsense numbers, we use an only cell
     // therefore the cell width is the same as the simulation box (which comes from the LB settings)
     if (elmts.size()==0) {
@@ -1225,7 +1256,7 @@ void DEM::initNeighborParameters() {
         cellWidth[1]=std::min(maxRad*5.0,demSize[1]);
         cellWidth[2]=std::min(maxRad*5.0,demSize[2]);
     }
-
+    
     for (int k=0; k<3; ++k) {
         // ncells = numbers of cells for the linked cell algorithm
         nCells[k]=int( ceil(demSize[k]/cellWidth[k]) );
@@ -1234,7 +1265,7 @@ void DEM::initNeighborParameters() {
         // increase by two to give a container for ghost cells, in case of periodicity
         nCells[k]+=2;
     }
-
+    
     // may need a revision
     nebrRange=std::max(maxRad*3.0,0.5*std::min(cellWidth[0],std::min(cellWidth[1],cellWidth[2])));
     maxDisp=0.5*nebrRange;
@@ -1245,7 +1276,7 @@ void DEM::initNeighborParameters() {
 }
 
 void DEM::evalMaxDisp() {
-
+    
     double maxVel=0.0;
     for (int n=0; n<elmts.size(); ++n){
         if (elmts[n].x1.norm2()>maxVel){
@@ -1258,21 +1289,21 @@ void DEM::evalMaxDisp() {
 
 void DEM::evalCellTable() {
     // updates cellTable, a table which associates every particle to the belonging cell
-
+    
     // delete precedent cell table
     cellTable.clear();
     // create a new cell table of size: number of particles + number of cells
     cellTable.resize(particles.size()+nCells[0]*nCells[1]*nCells[2]);
-
+    
     // assigns value -1 to all elements of cellTable (the reason becomes clear when looking at the last two lines of this function)
     for (int n=0; n<cellTable.size(); ++n) {
         // -1 is the default value for unassigned node
         cellTable[n]=-1;
     }
-
+    
     // cycle through n = cellTable size (number of particles + number of cells)
     for (int n=0; n<particles.size(); ++n) {
-
+        
         // c is a identifier for the belonging cell of a particle. If particle A belongs to cell (2,5,7) in a cell
         // system with 4*6*9 cells, then it will be c = particleSize + 2 + (5*4 + 7)*6 = particleSize + 164 <- bullshit :D
         // basically is a system to store the cell coordinate of a particle in a line vector
@@ -1285,10 +1316,10 @@ void DEM::evalCellTable() {
             elmts[n].resetVelocity();
             elmts[n].radius=0.0;
             elmts[n].x0=Zero;
-//            exit(0);
-//            continue;
+            //            exit(0);
+            //            continue;
         }
-
+        
         // cellTable is a structure to contain data in an efficient ways
         // every element of the array contains the pointer to another particle of the cell, until -1 is found
         // this explains why it needs to have particle.size() + cell.size() elements:
@@ -1296,12 +1327,12 @@ void DEM::evalCellTable() {
         cellTable[n] = cellTable[c];
         cellTable[c] = n;
     }
-
+    
 }
 
 void DEM::evalNeighborTable() {
-//    cout<<"NEW NEIGHBOR TABLE"<<endl;
-//    cout<<"Neighbor table evaluation"<<endl;
+    //    cout<<"NEW NEIGHBOR TABLE"<<endl;
+    //    cout<<"Neighbor table evaluation"<<endl;
     // prototype neighbors
     const unsigned int neighborCellNumber=14;
     
@@ -1345,16 +1376,16 @@ void DEM::evalNeighborTable() {
         updateParticlesCorrected();
         // update signal for LBM
         newNeighborList=true;
-
+        
     }
-
+    
     // every element in its cell
     evalCellTable();
     // delete precedent neighbor table
     neighborTable.clear();
     // elements size
     unsigned int particleSize=particles.size();
-
+    
     // cycle through all cells ->i0
     // variables for cell coordinate
     unsigned int i0[3];
@@ -1364,7 +1395,7 @@ void DEM::evalNeighborTable() {
                 
                 // cycle through neighbors vectors -> [s][k]
                 for (int s=0; s<neighborCellNumber; s++) {
-                        // variables for cell coordinate
+                    // variables for cell coordinate
                     unsigned int i1[3];
                     for (int k=0; k<3; k++) {
                         // determines the neighbor cells starting from the considered cell and the
@@ -1384,7 +1415,7 @@ void DEM::evalNeighborTable() {
                     const unsigned int cell0=(i0[2]*nCells[1]+i0[1])*nCells[0]+i0[0]+particleSize;
                     // linearized coordinate of cell0 (first cell of couples)
                     const unsigned int cell1=(i1[2]*nCells[1]+i1[1])*nCells[0]+i1[0]+particleSize;
-
+                    
                     // this cycles through the elements of a cell, checking all neighbors
                     // the storage system is efficient but not trivial
                     int n0=cellTable[cell0];
@@ -1413,7 +1444,7 @@ void DEM::evalNeighborTable() {
             }
         }
     }
-
+    
     if (walls.size()!=0) {
         evalNearWallTable();
     }
@@ -1423,20 +1454,20 @@ void DEM::evalNeighborTable() {
     if (objects.size()!=0) {
         evalNearObjectTable();
     }
-
+    
 }
 
 void DEM::evalNearWallTable() {
     // evaluate the distance of all particles to the walls. Creates a list of all particles
     // inside a certain range (nebrRange)
-
+    
     nearWallTable.clear();
-
+    
     for (int n=0; n<stdParticles; ++n) {
         for (int w=0; w<walls.size(); ++w) {
             if (walls[w].dist(particles[n].x0)<nebrRange) {
-        // for (wallList::iterator ip=walls.begin(); ip!=walls.end(); ++ip) {
-            //if (ip->dist(particles[n].x0)<nebrRange) {
+                // for (wallList::iterator ip=walls.begin(); ip!=walls.end(); ++ip) {
+                //if (ip->dist(particles[n].x0)<nebrRange) {
                 nearWallTable.push_back(n);
                 nearWallTable.push_back(w);
                 break;
@@ -1448,11 +1479,11 @@ void DEM::evalNearWallTable() {
 void DEM::evalNearObjectTable() {
     // evaluate the distance of all particles to the walls. Creates a list of all particles
     // inside a certain range (nebrRange)
-
+    
     nearObjectTable.clear();
-
+    
     const double nebrRange2=nebrRange*nebrRange;
-
+    
     for (int n=0; n<stdParticles; ++n) {
         for (int o=0; o<objects.size(); ++o) {
             tVect x0ij = particles[n].x0 - objects[o].x0;
@@ -1468,9 +1499,9 @@ void DEM::evalNearObjectTable() {
 void DEM::evalNearCylinderTable() {
     // evaluate the distance of all particles to the cylinders. Creates a list of all particles
     // inside a certain range (nebrRange)
-
+    
     nearCylinderTable.clear();
-
+    
     for (int n=0; n<stdParticles; ++n) {
         for (int c=0; c<cylinders.size(); ++c) {
             if (cylinders[c].dist(particles[n].x0) < nebrRange) {
@@ -1486,7 +1517,7 @@ void DEM::evalNearCylinderTable() {
 
 void DEM::pbcShift() {
     //shifts elements and particle according to boundary conditions
-
+    
     // this subroutine works on elements: particles need be generated/updated elsewhere
     for (int b=0; b<pbcs.size(); ++b) {
         const tVect pbcVector=pbcs[b].v;
@@ -1499,27 +1530,27 @@ void DEM::pbcShift() {
                 // cout<<"Shift element number"<<elmts[n].index<<"\n";
                 elmts[n].translate(pbcVector);
                 // shift particles (not the ghosts)
-//                for (int j=0; j<elmts[n].size; ++j) {
-//                    particles[elmts[n].components[j]].x0+=pbcVector;
-//                }
+                //                for (int j=0; j<elmts[n].size; ++j) {
+                //                    particles[elmts[n].components[j]].x0+=pbcVector;
+                //                }
             }
             // second plane of couple (right)
             if (rightDist<0.0) {
-//                cout<<"Shift element number"<<elmts[n].index<<"\n";
+                //                cout<<"Shift element number"<<elmts[n].index<<"\n";
                 elmts[n].translate(-1.0*pbcVector);
                 // shift particles (not the ghosts)
-//                for (int j=0; j<elmts[n].size; ++j) {
-//                    particles[elmts[n].components[j]].x0-=pbcVector;
-//                }
+                //                for (int j=0; j<elmts[n].size; ++j) {
+                //                    particles[elmts[n].components[j]].x0-=pbcVector;
+                //                }
             }
         }
     }
 }
 
 void DEM::createGhosts() {
-
+    
     ghosts.clear();
-
+    
     // this subroutine implies that elements (and their non-ghost particles) have already been shifted
     for (int b=0; b<pbcs.size(); ++b) {
         const tVect pbcVector=pbcs[b].v;
@@ -1531,8 +1562,8 @@ void DEM::createGhosts() {
                 // distances from the periodic walls
                 const double leftDist=pbcs[b].pl1.dist(particles[p].x0);
                 const double rightDist=pbcs[b].pl2.dist(particles[p].x0);
-    //            ASSERT(leftDist>0);
-    //            ASSERT(rightDist>0)
+                //            ASSERT(leftDist>0);
+                //            ASSERT(rightDist>0)
                 // first plane of couple (left)
                 if (leftDist<nebrRange) {
                     ghost dummyGhost;
@@ -1549,30 +1580,10 @@ void DEM::createGhosts() {
                 }
             }
         }
-//        for (int p=0; p<stdParticles; ++p) {
-//            // distances from the periodic walls
-//            const double leftDist=pbcs[b].pl1.dist(particles[p].x0);
-//            const double rightDist=pbcs[b].pl2.dist(particles[p].x0);
-////            ASSERT(leftDist>0);
-////            ASSERT(rightDist>0)
-//            // first plane of couple (left)
-//            if (leftDist<nebrRange) {
-//                ghost dummyGhost;
-//                dummyGhost.ghostIndex=particles[p].particleIndex;
-//                dummyGhost.pbcVector=pbcVector;
-//                ghosts.push_back(dummyGhost);
-//            }
-//            // second plane of couple (right), we copy only one time
-//            else if (rightDist<nebrRange) {
-//                ghost dummyGhost;
-//                dummyGhost.ghostIndex=particles[p].particleIndex;
-//                dummyGhost.pbcVector=-1.0*pbcVector;
-//                ghosts.push_back(dummyGhost);
-//            }
-//        }
     }
+    
     // now we need to check for particles at corners
-    // these are particles have already been shifted by two periodic walls IMPORTANT: (the case of three periodic walls is missing)
+    // these are particles have already been shifted by two periodic walls IMPORTANT: (the case of three periodic conditions is missing)
     ghostList cornerGhosts;
     cornerGhosts.clear();
     for (int g1=0; g1<ghosts.size(); ++g1) {
@@ -1586,16 +1597,16 @@ void DEM::createGhosts() {
             }
         }
     }
-//    cout<<cornerGhosts.size()<<endl;
+    //    cout<<cornerGhosts.size()<<endl;
     ghosts.insert(ghosts.end(), cornerGhosts.begin(), cornerGhosts.end());
-
+    
     // resizing containers
     particles.resize(stdParticles);
     //resizing components of elements
     for (int t=0; t<elmts.size(); ++t) {
         elmts[t].components.resize(elmts[t].size);
     }
-
+    
     // creating particles from ghosts
     // index for ghost particles
     unsigned int ind=stdParticles;
@@ -1605,7 +1616,7 @@ void DEM::createGhosts() {
         const unsigned int originParticleIndex=ghosts[g].ghostIndex;
         // reconstructing ghost particle
         particle dummyParticle=particles[originParticleIndex];
-//        dummyParticle.x0+=ghosts[g].pbcVector;
+        //        dummyParticle.x0+=ghosts[g].pbcVector;
         dummyParticle.particleIndex=ind;
         // adding ghost particle to components of the mother element
         elmts[dummyParticle.clusterIndex].components.push_back(dummyParticle.particleIndex);
@@ -1619,11 +1630,11 @@ void DEM::createGhosts() {
 // force computation functions
 
 void DEM::particleParticleContacts(IO& io) {
-
+    
     for (unsIntList::iterator ipi = neighborTable.begin(); ipi!=neighborTable.end(); ipi = ipi + 2){
         // couple of contact candidates
         unsIntList::iterator ipj = ipi + 1;
-         // pointers to particles
+        // pointers to particles
         const particle *parti=&particles[*ipi];
         const particle *partj=&particles[*ipj];
         // checking for overlap
@@ -1635,7 +1646,7 @@ void DEM::particleParticleContacts(IO& io) {
         const tVect vectorDistance=partj->x0-parti->x0;
         const double distance2=vectorDistance.norm2();
         // check for lubrication contact
-            // check for contact
+        // check for contact
         if (distance2<sigij2) {
             particleParticleCollision(parti,partj,vectorDistance,io);
         }
@@ -1643,9 +1654,9 @@ void DEM::particleParticleContacts(IO& io) {
 }
 
 void DEM::wallParticleContacts(IO& io) {
-
+    
     // to keep conventions, the index i refers to the wall, and j the particle
-
+    
     // cycling through particles and walls in wall neighbor list
     for (unsIntList::iterator ip=nearWallTable.begin(); ip!=nearWallTable.end(); ip=ip+2) {
         // couple of contact candidates
@@ -1660,8 +1671,8 @@ void DEM::wallParticleContacts(IO& io) {
         const double distance=wallI->dist(partJ->x0);
         bool wallIsOk=true;
         if (wallIsOk) {
-        // distance before contact
-        const double overlap=rj-distance;
+            // distance before contact
+            const double overlap=rj-distance;
             if (overlap>0.0){
                 wallParticleCollision(wallI,partJ,overlap,io);
             }
@@ -1670,13 +1681,13 @@ void DEM::wallParticleContacts(IO& io) {
 }
 
 void DEM::cylinderParticelContacts() {
-
+    
     // to keep conventions, the index i refers to the cylinder, and j the particle
-
+    
     // cycling through the cylinders
     //for (cylinderList::iterator ip = cylinders.begin(); ip!=cylinders.end(); ip++) {
-        //cylinder *cylinderI=&*ip;
-        // cycling through the cylinder neighbor particles
+    //cylinder *cylinderI=&*ip;
+    // cycling through the cylinder neighbor particles
     for (unsIntList::iterator ip = nearCylinderTable.begin(); ip!=nearCylinderTable.end(); ip=ip+2) {
         // couple of contact candidates
         unsIntList::iterator icyl=ip+1;
@@ -1698,9 +1709,9 @@ void DEM::cylinderParticelContacts() {
 }
 
 void DEM::objectParticleContacts(IO& io) {
-
+    
     // to keep conventions, the index i refers to the object, and j the particle
-
+    
     for (unsIntList::iterator ip=nearObjectTable.begin(); ip!=nearObjectTable.end(); ip=ip+2) {
         // couple of contact candidates
         unsIntList::iterator iobj=ip+1;
@@ -1752,13 +1763,13 @@ void DEM::objectParticleContacts(IO& io) {
 //}
 
 inline void DEM::particleParticleCollision(const particle *partI, const particle *partJ, const tVect& vectorDistance, IO& io) {
-
+    
     // pointers to elements
     elmt *elmtI=&elmts[partI->clusterIndex];
     elmt *elmtJ=&elmts[partJ->clusterIndex];
-
+    
     // NORMAL FORCE ///////////////////////////////////////////////////////////////////
-
+    
     // geometry /////////////////////////////
     const double radI=partI->r;
     const double radJ=partJ->r;
@@ -1778,18 +1789,18 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
     const double effMass=elmtI->m*elmtJ->m/(elmtI->m+elmtJ->m);
     // effective radius
     const double effRad=radI*radJ/(radI+radJ);
-
+    
     // force computation /////////////////////////////////
     const double normNormalForce=normalContact(overlap, normRelVel, effRad, effMass);
     ASSERT(normNormalForce>=0.0);
-
+    
     //    // Overlap elastic potential energy
-//    energy.elastic+=0.5*fn*xi*xi;
-
+    //    energy.elastic+=0.5*fn*xi*xi;
+    
     // force application ///////////////////////////////////
     // vectorial normal force
     const tVect normalForce=en*normNormalForce;
-
+    
     // cluster geometry
     // vectorized radii
     const tVect vecRadI=radI*en;
@@ -1797,7 +1808,7 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
     // vectorized distance contactPoint-center of cluster
     const tVect centerDistI=vecRadI+(partI->radiusVec);
     const tVect centerDistJ=vecRadj+(partJ->radiusVec);
-
+    
     if (partI->particleIndex<stdParticles) {
         elmtI->FParticle=elmtI->FParticle-normalForce;
         //  moment generated in non-spherical particles
@@ -1814,7 +1825,7 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
     }
     
     // TANGENTIAL FORCE ///////////////////////////////////////////////////////////////////
-
+    
     // angular velocities (global reference frame)
     const tVect wI=elmtI->wpGlobal; //2.0*quat2vec( elmtI->qp1.multiply( elmtI->qp0.adjoint() ) );
     const tVect wJ=elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
@@ -1853,12 +1864,12 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
 }
 
 inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const double& overlap, IO& io) {
-
-   // pointers to element
+    
+    // pointers to element
     elmt *elmtJ=&elmts[partJ->clusterIndex];
-
+    
     // NORMAL FORCE ///////////////////////////////////////////////////////////////////
-
+    
     // geometry ///////////////
     // particle radius
     const double radJ=partJ->r;
@@ -1872,18 +1883,18 @@ inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const
     const double normRelVel=relVel.dot(en);
     // relative normal velocity
     const tVect normalRelVel=en*normRelVel;
-
+    
     // force computation /////////////////////////////////
     const double normNormalForce=normalContact(2.0*overlap, normRelVel, radJ, elmtJ->m);
-
-
+    
+    
     // Overlap elastic potential energy
     //                    energy.elastic+=fn*xj/2.5;
-
+    
     // force application ///////////////////////////////////
     // vectorial normal force
     const tVect normalForce=en*normNormalForce;
-
+    
     // cluster geometry
     // vectorized radius
     const tVect vecRadJ=-radJ*en;
@@ -1902,9 +1913,9 @@ inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const
         elmtJ->MWall=elmtJ->MWall+centerDistJ.cross(normalForce);
     }
     
-
+    
     // TANGENTIAL FORCE ///////////////////////////////////////////////////////////////////
-
+    
     // angular velocities (global reference frame)
     const tVect wJ=elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
     // relative velocity at contact point
@@ -1913,7 +1924,7 @@ inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const
     const tVect tangRelVelContact=relVelContact-normalRelVel;
     // norm of tangential velocity
     const double normTangRelVelContact=tangRelVelContact.norm();
-
+    
     // checking if there is any tangential motion
     if (normTangRelVelContact!=0.0) {
         // tangential force
@@ -1922,7 +1933,7 @@ inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const
         const tVect et=tangRelVelContact/tangRelVelContact.norm();
         // vectorial tangential force
         const tVect tangForce=normTangForce*et;
-
+        
         // torque updating
         elmtJ->MWall=elmtJ->MWall-centerDistJ.cross(tangForce);
         // force updating
@@ -1935,12 +1946,12 @@ inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const
 }
 
 inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *partJ, const double& overlap) {
-
-   // pointers to element
+    
+    // pointers to element
     elmt *elmtJ=&elmts[partJ->clusterIndex];
-
+    
     // NORMAL FORCE ///////////////////////////////////////////////////////////////////
-
+    
     // geometry ///////////////
     // particle radius
     const double radJ=partJ->r;
@@ -1958,23 +1969,23 @@ inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *
     const double normRelVel=relVel.dot(en);
     // relative normal velocity
     const tVect normalRelVel=en*normRelVel;
-
+    
     // force computation /////////////////////////////////
     const double normNormalForce=normalContact(2.0*overlap, normRelVel, radJ, elmtJ->m);
-
+    
     // Overlap elastic potential energy
     //                    energy.elastic+=fn*xj/2.5;
-
+    
     // force application ///////////////////////////////////
     // vectorial normal force
     const tVect normalForce=en*normNormalForce;
-
+    
     // cluster geometry
     // vectorized radius
     const tVect vecRadJ=-radJ*en;
     // vectorized distance contactPoint-center of cluster
     const tVect centerDistJ=vecRadJ+(partJ->x0-elmtJ->xp0);
-
+    
     // force updating
     elmtJ->FWall=elmtJ->FWall+normalForce;
     // wallI->FParticle=wallI->FParticle-fnv;
@@ -1982,9 +1993,9 @@ inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *
     if (elmtJ->size>1) {
         elmtJ->MWall=elmtJ->MWall+centerDistJ.cross(normalForce);
     }
-
+    
     // TANGENTIAL FORCE ///////////////////////////////////////////////////////////////////
-
+    
     // angular velocities (global reference frame)
     const tVect wJ=elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
     // relative velocity at contact point
@@ -2001,7 +2012,7 @@ inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *
         const tVect et=tangRelVelContact/tangRelVelContact.norm();
         // vectorial tangential force
         const tVect tangForce=normTangForce*et;
-
+        
         // torque updating
         elmtJ->MWall=elmtJ->MWall-centerDistJ.cross(tangForce);
         // force updating
@@ -2011,12 +2022,12 @@ inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *
 }
 
 inline void DEM::objectParticleCollision(object *objectI, const particle *partJ, const tVect& vectorDistance, IO& io) {
-
-   // pointers to element
+    
+    // pointers to element
     elmt *elmtJ=&elmts[partJ->clusterIndex];
-
+    
     // NORMAL FORCE ///////////////////////////////////////////////////////////////////
-
+    
     // geometry ///////////////
     // particle radius
     const double radJ=partJ->r;
@@ -2034,23 +2045,23 @@ inline void DEM::objectParticleCollision(object *objectI, const particle *partJ,
     const double normRelVel=relVel.dot(en);
     // relative normal velocity
     const tVect normalRelVel = en*normRelVel;
-
+    
     // force computation /////////////////////////////////
     const double normNormalForce=normalContact(2.0*overlap, normRelVel, radJ, elmtJ->m);
-
+    
     // Overlap elastic potential energy
     //                    energy.elastic+=fn*xj/2.5;
-
+    
     // force application ///////////////////////////////////
     // vectorial normal force
     const tVect normalForce=en*normNormalForce;
-
+    
     // cluster geometry
     // vectorized radius
     const tVect vecRadJ=-radJ*en;
     // vectorized distance contactPoint-center of cluster
     const tVect centerDistJ=vecRadJ+(partJ->x0-elmtJ->xp0);
-
+    
     // force updating
     elmtJ->FWall=elmtJ->FWall+normalForce;
     objectI->FParticle=objectI->FParticle-normalForce;
@@ -2060,7 +2071,7 @@ inline void DEM::objectParticleCollision(object *objectI, const particle *partJ,
     }
     
     // TANGENTIAL FORCE ///////////////////////////////////////////////////////////////////
-
+    
     // angular velocities (global reference frame)
     const tVect wJ=elmtJ->wpGlobal; //2.0*quat2vec( elmtJ->qp1.multiply( elmtJ->qp0.adjoint() ) );
     // relative velocity at contact point
@@ -2077,7 +2088,7 @@ inline void DEM::objectParticleCollision(object *objectI, const particle *partJ,
         const tVect et=tangRelVelContact/tangRelVelContact.norm();
         // vectorial tangential force
         const tVect tangForce=normTangForce*et;
-
+        
         // torque updating
         elmtJ->MWall=elmtJ->MWall-centerDistJ.cross(tangForce);
         // force updating
@@ -2089,10 +2100,10 @@ inline void DEM::objectParticleCollision(object *objectI, const particle *partJ,
 }
 
 double DEM::normalContact(const double& overlap, const double& vrelnnorm, const double& effRad, const double& effMass) const {
-
+    
     // total normal force
     double fn=0.0;
-
+    
     switch (sphereMat.contactModel) {
         case HERTZIAN: {
             // square root of effective radius
@@ -2121,16 +2132,16 @@ double DEM::normalContact(const double& overlap, const double& vrelnnorm, const 
             break;
         }
     }
-
+    
     return fn;
     
 }
 
 double DEM::tangentialContact(const double& vreltNorm, const double& fn, const double& effRad, const double& effMass, const double& friction) const {
-
+    
     // tangential force
     double fs=0.0;
-
+    
     switch (sphereMat.contactModel) {
         case HERTZIAN: {
             static const double power=1.0/3.0;
@@ -2169,18 +2180,18 @@ double DEM::tangentialContact(const double& vreltNorm, const double& fn, const d
     //    cout<<"fs="<<fs<<endl;
     //}
     ASSERT(!isnan(fs));
-
+    
     return fs;
-
+    
 }
 
 // energy functions
 
 void DEM::updateEnergy(){
-
+    
     //resetting energy
     particleEnergy.reset();
-
+    
     // kinetic energy
     double tKin(0.0), rKin(0.0);
     for (int n=0; n<elmts.size(); ++n){
@@ -2189,14 +2200,14 @@ void DEM::updateEnergy(){
         //const tQuat q0adj=elmts[n].q0.adjoint();
         // rotational velocity (body-fixed reference frame)
         //const tVect w=wLocal;//2.0*quat2vec( q0adj.multiply( elmts[n].q1 ) );
-//        Tvect w=2.0*quat2vec( elmts[i].q1.multiply( elmts[i].q0.adjoint() ) );
+        //        Tvect w=2.0*quat2vec( elmts[i].q1.multiply( elmts[i].q0.adjoint() ) );
         const tVect wSquare=elmts[n].wLocal.compProd(elmts[n].wLocal);
         rKin+=elmts[n].I.dot(wSquare);
     }
-
+    
     particleEnergy.rotKin=rKin;
     particleEnergy.trKin=tKin;
-
+    
     // potential energy
     // defining reference plane
     wall zeroWall;
@@ -2220,34 +2231,34 @@ void DEM::updateEnergy(){
         }
     }
     particleEnergy.grav=g;
-
+    
     // elastic is missing
-
+    
     // total
     particleEnergy.updateTotal();
-
+    
 }
 
 /////// This is for .data file
 
 void DEM::exportDataFile(IO& io){
     // export data particles: positions, velocities, angular positions, angular velocity. 
-           
+    
     static int w = io.dataFile.precision() + 5;
     io.dataFile.open(io.dataFileName.c_str(), ios::app);
-
+    
     double zero = 0.0;
-        
+    
     // set data header in order: N (standParticles + standObjects), time, simulation domain (volume)
     io.dataFile<< stdParticles + stdObjects
-                    << " " << setprecision(5) << demTime
-                    << " " << setprecision(w) << zero
-                    << " " << setprecision(w) << zero
-                    << " " << setprecision(w) << zero
-                    << " " << setprecision(w) << demSize[0]
-                    << " " << setprecision(w) << demSize[1]
-                    << " " << setprecision(w) << demSize[2]
-                    << "\n";
+            << " " << setprecision(5) << demTime
+            << " " << setprecision(w) << zero
+            << " " << setprecision(w) << zero
+            << " " << setprecision(w) << zero
+            << " " << setprecision(w) << demSize[0]
+            << " " << setprecision(w) << demSize[1]
+            << " " << setprecision(w) << demSize[2]
+            << "\n";
     
     tVect angPos = tVect(0.0,0.0,0.0);  // used to match MercuryDPM outputFiles 
     tVect Obw = tVect(0.0,0.0,0.0);     // objects angular velocity, used to match MercuryDPM outputFiles 
@@ -2279,7 +2290,7 @@ void DEM::exportDataFile(IO& io){
         io.dataFile<<zero<<" ";
         // dataFile<<dem.particles[i].index<<" "; //keep default 0 because we don't have different species (i.e., sizes), should store information regarding the particle’s material properties (see: http://docs.mercurydpm.org/Beta/d1/d6b/analysing.html).
         io.dataFile<<"\n";
-   }
+    }
     
     io.dataFile.close();
     
@@ -2291,228 +2302,228 @@ void DEM::exportRestartFile(IO& io){
     
     double counter = io.currentTimeStep/io.saveCount;
     
-   //  This lines are used to write one single files with restart data overtime
-   // static int w = restartFile.precision() + 5;
+    //  This lines are used to write one single files with restart data overtime
+    // static int w = restartFile.precision() + 5;
     io.restartFile.open(io.restartFileName.c_str());  // this is file is overwritten and each time step, (ios::app is NOT used)
     
     io.restartFile << "restart_version " << 1 << " name" << " " << io.problemNameString        
-                << "\n" 
-                << "dataFile " << "fileType " << "ONE_FILE " << "saveCount " << io.saveCount << " " << "counter " << counter << " nextSavedTimeStep " << 0 << "\n"  
-                << "fStatFile " << "fileType " << "ONE_FILE " << "saveCount " << io.saveCount << " " << "counter " << counter << " nextSavedTimeStep " << 0 << "\n"
-                << "eneFile " << "fileType " << "ONE_FILE " << "saveCount " << io.saveCount << " " << "counter " << counter << " nextSavedTimeStep " << 0 << "\n"
-                << "restartFile " << "fileType " << "ONE_FILE " << "saveCount " << io.saveCount << " " << "counter " << counter << " nextSavedTimeStep " << 0 << "\n"
-                << "statFile " << "fileType " << "ONE_FILE " << "saveCount " << io.saveCount << " " << "counter " << counter << " nextSavedTimeStep " << 0 << "\n"
-                << "xMin " << 0 << " xMax " << demSize[0]    
-                << " yMin " << 0 << " yMax " << demSize[1]   
-                << " zMin " << 0 << " zMax " << demSize[2]   
-                << "\n" 
-                << "timeStep " << setprecision(10) << deltat  //statisticExpTime //dem.deltaT   // is it deltaT or just the gap time between two file output??????
-                << " time " << demTime    // it will be the end-simulation-time as the .restart file is overwritten till the end of simulation
-                << " ntimeSteps " << io.currentTimeStep
-                << " timeMax " << demTime
-                << "\n"
-                << "systemDimensions " << 3              // Dimension simulation (Keep default 3)
-                << " particleDimensions " << 3
-                << " gravity " << demF.dot(Xdirec) << " " << demF.dot(Y) << " " << demF.dot(Z)
-                << "\n"
-                << "Species " << 1          // Keep default 1
-                << "\n"
-                << "LinearViscoelasticSlidingFrictionSpecies id " << 0  
-                << " density " << sphereMat.density
-                << " stiffness " << sphereMat.linearStiff     //// normal spring constant (linear stiffness) -> unused
-                << " dissipation " << sphereMat.dampCoeff   //// normal viscous (dampingCoeff )  -> unused
-                << " slidingStiffness " << 0          // tangential spring constant (not implemented). In MercuryDPM is set as 2/7 * k(normal)
-                << " slidingDissipation " << 0       // tangential viscous constant (not implemented). In MercuryDPM is set as 2/7 * disp(normal) 
-                << " slidingFrictionCoefficient " << sphereMat.frictionCoefPart  // Coulomb friction (constant)
-                << " slidingFrictionCoefficientStatic " << 0
-                << "\n"
-                << "Walls " << 0        //\todo might write FiniteWall instead (merucryDPM WallHandler.cc - lines 128ith) for the 4 walls you have with normal vector found in ??    
-                << "\n"
-//                << "InfiniteWall normal " << -1 << " " << -0 << " " << -0 << " position " << dem.pbcs[1].v.dot(X)     //find it in pbcs.plane 1  
-//                << "\n"
-//                << "InfiniteWall normal " << 1 << " " << 0 << " " << 0 << " position " << dem.pbcs[0].v.dot(X)
-//                << "\n"
-                << "Boundaries " << 0
-                << "\n"
-                << "Particles " << stdParticles + stdObjects
-                << "\n";
-                                   
-                tVect angPos = tVect(0.0,0.0,0.0);  // used to match MercuryDPM output files 
-                tVect Obw = tVect(0.0,0.0,0.0);     // objects angular velocity, used to match MercuryDPM output files 
-                double IndSpecies = 0.0;
-                double zero = 0.0;
-
-                // Coarse Graining reads the indeces based on the saving order. Objects (fixed particles) must be first. The CG code recognises those because of the inverse mass 
-                
-                for (int o=0; o<stdObjects; ++o) {
-                    // export object variables
-                    io.restartFile<<"BaseParticle id ";  //BP = BaseParticle (see mercuryDPM - ParticleHandler.cc lines 223-256)
-                    io.restartFile<< o <<" ";
-                    io.restartFile<< "indSpecies "<< 0 <<" ";
-                    io.restartFile<< "position ";
-                    objects[o].x0.print(io.restartFile);
-                    io.restartFile<< "orientation " << 0 << " " << 0 << " " << 0 << " " << 0 << " ";
-                    io.restartFile<< "velocity ";
-                    objects[o].x1.print(io.restartFile);
-                    io.restartFile<< "angularVelocity ";
-                    io.restartFile<<Obw.dot(Xdirec)<<" ";
-                    io.restartFile<<Obw.dot(Y)<<" ";
-                    io.restartFile<<Obw.dot(Z)<<" "; 
-                    io.restartFile<< 0 <<" ";
-                    io.restartFile<< "force " << 0 << " " << 0 << " " << 0 << " ";
-                    io.restartFile<< "torque " << 0 << " " << 0 << " " << 0 << " ";
-                    io.restartFile<< "radius ";
-                    io.restartFile<< objects[o].r<<" ";
-                    io.restartFile<< "invMass ";
-                    io.restartFile<<zero<<" ";                                     //inverse mass
-                    io.restartFile<< "invInertia ";
-                    io.restartFile<<zero<<" ";                                     //inverse Inertia
-                    io.restartFile<<"\n";
-                }
-
-                for (int i=0; i<stdParticles; ++i) {
-                    io.restartFile<<"BaseParticle id ";  //BP = BaseParticle (see mercuryDPM - ParticleHandler.cc lines 223-256)
-                    io.restartFile<< i+stdObjects <<" ";
-                    io.restartFile<< "indSpecies "<< 0 <<" ";
-                    io.restartFile<< "position ";
-                    particles[i].x0.print(io.restartFile);
-                    io.restartFile<< "orientation " << 0 << " " << 0 << " " << 0 << " " << 0 << " ";
-                    io.restartFile<< "velocity ";
-                    particles[i].x1.print(io.restartFile);
-                    io.restartFile<< "angularVelocity ";
-                    elmts[particles[i].clusterIndex].wGlobal.print(io.restartFile);
-                    io.restartFile<< 0 <<" ";
-                    io.restartFile<< "force " << 0 << " " << 0 << " " << 0 << " ";
-                    io.restartFile<< "torque " << 0 << " " << 0 << " " << 0 << " ";
-                    io.restartFile<< "radius ";
-                    io.restartFile<< particles[i].r<<" ";
-                    io.restartFile<< "invMass ";
-                    io.restartFile<<1/elmts[particles[i].clusterIndex].m<<" ";                  //inverse mass
-                    io.restartFile<< "invInertia ";
-                    io.restartFile<<1/elmts[particles[i].clusterIndex].I.dot(Xdirec)<<" ";        //inverse Inertia
-                    io.restartFile<<"\n";  
-                }
-                
-                io.restartFile<<"Interactions " << 0; 
-                io.restartFile<<"\n"; 
-       
+            << "\n" 
+            << "dataFile " << "fileType " << "ONE_FILE " << "saveCount " << io.saveCount << " " << "counter " << counter << " nextSavedTimeStep " << 0 << "\n"  
+            << "fStatFile " << "fileType " << "ONE_FILE " << "saveCount " << io.saveCount << " " << "counter " << counter << " nextSavedTimeStep " << 0 << "\n"
+            << "eneFile " << "fileType " << "ONE_FILE " << "saveCount " << io.saveCount << " " << "counter " << counter << " nextSavedTimeStep " << 0 << "\n"
+            << "restartFile " << "fileType " << "ONE_FILE " << "saveCount " << io.saveCount << " " << "counter " << counter << " nextSavedTimeStep " << 0 << "\n"
+            << "statFile " << "fileType " << "ONE_FILE " << "saveCount " << io.saveCount << " " << "counter " << counter << " nextSavedTimeStep " << 0 << "\n"
+            << "xMin " << 0 << " xMax " << demSize[0]    
+            << " yMin " << 0 << " yMax " << demSize[1]   
+            << " zMin " << 0 << " zMax " << demSize[2]   
+            << "\n" 
+            << "timeStep " << setprecision(10) << deltat  //statisticExpTime //dem.deltaT   // is it deltaT or just the gap time between two file output??????
+            << " time " << demTime    // it will be the end-simulation-time as the .restart file is overwritten till the end of simulation
+            << " ntimeSteps " << io.currentTimeStep
+            << " timeMax " << demTime
+            << "\n"
+            << "systemDimensions " << 3              // Dimension simulation (Keep default 3)
+            << " particleDimensions " << 3
+            << " gravity " << demF.dot(Xdirec) << " " << demF.dot(Y) << " " << demF.dot(Z)
+            << "\n"
+            << "Species " << 1          // Keep default 1
+            << "\n"
+            << "LinearViscoelasticSlidingFrictionSpecies id " << 0  
+            << " density " << sphereMat.density
+            << " stiffness " << sphereMat.linearStiff     //// normal spring constant (linear stiffness) -> unused
+            << " dissipation " << sphereMat.dampCoeff   //// normal viscous (dampingCoeff )  -> unused
+            << " slidingStiffness " << 0          // tangential spring constant (not implemented). In MercuryDPM is set as 2/7 * k(normal)
+            << " slidingDissipation " << 0       // tangential viscous constant (not implemented). In MercuryDPM is set as 2/7 * disp(normal) 
+            << " slidingFrictionCoefficient " << sphereMat.frictionCoefPart  // Coulomb friction (constant)
+            << " slidingFrictionCoefficientStatic " << 0
+            << "\n"
+            << "Walls " << 0        //\todo might write FiniteWall instead (merucryDPM WallHandler.cc - lines 128ith) for the 4 walls you have with normal vector found in ??    
+            << "\n"
+            //                << "InfiniteWall normal " << -1 << " " << -0 << " " << -0 << " position " << dem.pbcs[1].v.dot(X)     //find it in pbcs.plane 1  
+            //                << "\n"
+            //                << "InfiniteWall normal " << 1 << " " << 0 << " " << 0 << " position " << dem.pbcs[0].v.dot(X)
+            //                << "\n"
+            << "Boundaries " << 0
+            << "\n"
+            << "Particles " << stdParticles + stdObjects
+            << "\n";
+    
+    tVect angPos = tVect(0.0,0.0,0.0);  // used to match MercuryDPM output files 
+    tVect Obw = tVect(0.0,0.0,0.0);     // objects angular velocity, used to match MercuryDPM output files 
+    double IndSpecies = 0.0;
+    double zero = 0.0;
+    
+    // Coarse Graining reads the indeces based on the saving order. Objects (fixed particles) must be first. The CG code recognises those because of the inverse mass 
+    
+    for (int o=0; o<stdObjects; ++o) {
+        // export object variables
+        io.restartFile<<"BaseParticle id ";  //BP = BaseParticle (see mercuryDPM - ParticleHandler.cc lines 223-256)
+        io.restartFile<< o <<" ";
+        io.restartFile<< "indSpecies "<< 0 <<" ";
+        io.restartFile<< "position ";
+        objects[o].x0.print(io.restartFile);
+        io.restartFile<< "orientation " << 0 << " " << 0 << " " << 0 << " " << 0 << " ";
+        io.restartFile<< "velocity ";
+        objects[o].x1.print(io.restartFile);
+        io.restartFile<< "angularVelocity ";
+        io.restartFile<<Obw.dot(Xdirec)<<" ";
+        io.restartFile<<Obw.dot(Y)<<" ";
+        io.restartFile<<Obw.dot(Z)<<" "; 
+        io.restartFile<< 0 <<" ";
+        io.restartFile<< "force " << 0 << " " << 0 << " " << 0 << " ";
+        io.restartFile<< "torque " << 0 << " " << 0 << " " << 0 << " ";
+        io.restartFile<< "radius ";
+        io.restartFile<< objects[o].r<<" ";
+        io.restartFile<< "invMass ";
+        io.restartFile<<zero<<" ";                                     //inverse mass
+        io.restartFile<< "invInertia ";
+        io.restartFile<<zero<<" ";                                     //inverse Inertia
+        io.restartFile<<"\n";
+    }
+    
+    for (int i=0; i<stdParticles; ++i) {
+        io.restartFile<<"BaseParticle id ";  //BP = BaseParticle (see mercuryDPM - ParticleHandler.cc lines 223-256)
+        io.restartFile<< i+stdObjects <<" ";
+        io.restartFile<< "indSpecies "<< 0 <<" ";
+        io.restartFile<< "position ";
+        particles[i].x0.print(io.restartFile);
+        io.restartFile<< "orientation " << 0 << " " << 0 << " " << 0 << " " << 0 << " ";
+        io.restartFile<< "velocity ";
+        particles[i].x1.print(io.restartFile);
+        io.restartFile<< "angularVelocity ";
+        elmts[particles[i].clusterIndex].wGlobal.print(io.restartFile);
+        io.restartFile<< 0 <<" ";
+        io.restartFile<< "force " << 0 << " " << 0 << " " << 0 << " ";
+        io.restartFile<< "torque " << 0 << " " << 0 << " " << 0 << " ";
+        io.restartFile<< "radius ";
+        io.restartFile<< particles[i].r<<" ";
+        io.restartFile<< "invMass ";
+        io.restartFile<<1/elmts[particles[i].clusterIndex].m<<" ";                  //inverse mass
+        io.restartFile<< "invInertia ";
+        io.restartFile<<1/elmts[particles[i].clusterIndex].I.dot(Xdirec)<<" ";        //inverse Inertia
+        io.restartFile<<"\n";  
+    }
+    
+    io.restartFile<<"Interactions " << 0; 
+    io.restartFile<<"\n"; 
+    
     io.restartFile.close();
-   
+    
 }
 
 void DEM::printHeaderStatFile(IO& io){
-       
+    
     io.statParticleFile.open(io.statisticFileName.c_str(), ios::app);
     
     double zero = 0.0;
     
     // set statistic header in order: time, min and max simulation domain (volume), min max particle radii
     io.statParticleFile << "#" 
-                        << " " << setprecision(5) << demTime 
-                        << " " << zero 
-                        << endl;
+            << " " << setprecision(5) << demTime 
+            << " " << zero 
+            << endl;
     io.statParticleFile << "#"
-                        << " " << zero              
-                        << " " << zero
-                        << " " << zero  
-                        << " " << demSize[0]
-                        << " " << demSize[1]
-                        << " " << demSize[2]
-                        << endl;
+            << " " << zero              
+            << " " << zero
+            << " " << zero  
+            << " " << demSize[0]
+            << " " << demSize[1]
+            << " " << demSize[2]
+            << endl;
     io.statParticleFile << "#" 
-                        << " " << particles[0].r
-                        << " " << particles[0].r
-                        << " " << zero
-                        << " " << zero
-                        << " " << zero
-                        << " " << zero
-                        << endl;
+            << " " << particles[0].r
+            << " " << particles[0].r
+            << " " << zero
+            << " " << zero
+            << " " << zero
+            << " " << zero
+            << endl;
 }
 
 void DEM::saveStatPPcollision( IO& io, const particle* partI, const particle* partJ, const double& overlap, const double& normNormalForce, const tVect& en, const double normTangForce, const tVect et) const {
     // Save data for coarse graining (DEM statistics)
     if (io.saveCount != 0 && io.currentTimeStep % io.saveCount == 0 
-        && partI->particleIndex < stdParticles && partJ->particleIndex < stdParticles) {   // \todo deal better with ghosts
-            
-    tVect centre = 0.5 * (partI->x0 +  partJ->x0);
-    double deltat = 0.0;  // length of tangential spring, not yet implemented 
-
-    io.statParticleFile << setprecision(3) << demTime
-                        << " " << partI->particleIndex + stdObjects
-                        << " " << partJ->particleIndex + stdObjects
-                        << " " << setprecision(wSt) << centre.dot(Xdirec) 
-                        << " " << setprecision(wSt) << centre.dot(Y) 
-                        << " " << setprecision(wSt) << centre.dot(Z) 
-                        << " " << setprecision(wSt) << overlap
-                        << " " << setprecision(wSt) << deltat
-                        << " " << setprecision(wSt) << abs(normNormalForce)
-                        << " " << setprecision(wSt) << abs(normTangForce)
-                        << " " << setprecision(wSt) << en.dot(Xdirec)
-                        << " " << setprecision(wSt) << en.dot(Y)
-                        << " " << setprecision(wSt) << en.dot(Z)
-                        << " " << setprecision(wSt) << et.dot(Xdirec)
-                        << " " << setprecision(wSt) << et.dot(Y)
-                        << " " << setprecision(wSt) << et.dot(Z)
-                        << endl;
+            && partI->particleIndex < stdParticles && partJ->particleIndex < stdParticles) {   // \todo deal better with ghosts
+        
+        tVect centre = 0.5 * (partI->x0 +  partJ->x0);
+        double deltat = 0.0;  // length of tangential spring, not yet implemented 
+        
+        io.statParticleFile << setprecision(3) << demTime
+                << " " << partI->particleIndex + stdObjects
+                << " " << partJ->particleIndex + stdObjects
+                << " " << setprecision(wSt) << centre.dot(Xdirec) 
+                << " " << setprecision(wSt) << centre.dot(Y) 
+                << " " << setprecision(wSt) << centre.dot(Z) 
+                << " " << setprecision(wSt) << overlap
+                << " " << setprecision(wSt) << deltat
+                << " " << setprecision(wSt) << abs(normNormalForce)
+                << " " << setprecision(wSt) << abs(normTangForce)
+                << " " << setprecision(wSt) << en.dot(Xdirec)
+                << " " << setprecision(wSt) << en.dot(Y)
+                << " " << setprecision(wSt) << en.dot(Z)
+                << " " << setprecision(wSt) << et.dot(Xdirec)
+                << " " << setprecision(wSt) << et.dot(Y)
+                << " " << setprecision(wSt) << et.dot(Z)
+                << endl;
     }    
 }
 
 void DEM::saveStatWPcollision( IO& io, const wall* wallI, const particle* partJ, const double& overlap, const double& normNormalForce, const tVect& en, const double normTangForce, const tVect et) const{
     
-  // Save data for coarse graining (DEM statistics)
+    // Save data for coarse graining (DEM statistics)
     if (io.saveCount != 0 && io.currentTimeStep % io.saveCount == 0 
-        && partJ->particleIndex < stdParticles) {   // \todo deal better with ghosts        
-    
-    tVect centre = partJ->x0 - en * (partJ->r - overlap);
-    double deltat = 0.0;  // length of tangential spring, not yet implemented  
-    int wallIdx = wallI->index + 1; 
-            
-    io.statParticleFile << setprecision(3) << demTime
-                        << " " << partJ->particleIndex + stdObjects
-                        << " " << -wallIdx
-                        << " " << setprecision(wSt) << centre.dot(Xdirec) 
-                        << " " << setprecision(wSt) << centre.dot(Y) 
-                        << " " << setprecision(wSt) << centre.dot(Z) 
-                        << " " << setprecision(wSt) << overlap
-                        << " " << setprecision(wSt) << deltat
-                        << " " << setprecision(wSt) << abs(normNormalForce)
-                        << " " << setprecision(wSt) << abs(normTangForce)
-                        << " " << setprecision(wSt) << en.dot(Xdirec)
-                        << " " << setprecision(wSt) << en.dot(Y)
-                        << " " << setprecision(wSt) << en.dot(Z)
-                        << " " << setprecision(wSt) << et.dot(Xdirec)
-                        << " " << setprecision(wSt) << et.dot(Y)
-                        << " " << setprecision(wSt) << et.dot(Z)
-                        << endl;
+            && partJ->particleIndex < stdParticles) {   // \todo deal better with ghosts        
+        
+        tVect centre = partJ->x0 - en * (partJ->r - overlap);
+        double deltat = 0.0;  // length of tangential spring, not yet implemented  
+        int wallIdx = wallI->index + 1; 
+        
+        io.statParticleFile << setprecision(3) << demTime
+                << " " << partJ->particleIndex + stdObjects
+                << " " << -wallIdx
+                << " " << setprecision(wSt) << centre.dot(Xdirec) 
+                << " " << setprecision(wSt) << centre.dot(Y) 
+                << " " << setprecision(wSt) << centre.dot(Z) 
+                << " " << setprecision(wSt) << overlap
+                << " " << setprecision(wSt) << deltat
+                << " " << setprecision(wSt) << abs(normNormalForce)
+                << " " << setprecision(wSt) << abs(normTangForce)
+                << " " << setprecision(wSt) << en.dot(Xdirec)
+                << " " << setprecision(wSt) << en.dot(Y)
+                << " " << setprecision(wSt) << en.dot(Z)
+                << " " << setprecision(wSt) << et.dot(Xdirec)
+                << " " << setprecision(wSt) << et.dot(Y)
+                << " " << setprecision(wSt) << et.dot(Z)
+                << endl;
     }     
 }
 
 void DEM::saveStatOPcollision( IO& io, const object* objectI, const particle* partJ, const double& overlap, const double& normNormalForce, const tVect& en, const double normTangForce, const tVect et) const {
-     
+    
     // Save data for coarse graining (DEM statistics)
     if (io.saveCount != 0 && io.currentTimeStep % io.saveCount == 0 
-        && partJ->particleIndex < stdParticles) {   // \todo deal better with ghosts
-                
-    tVect centre = 0.5 * (objectI->x0 +  partJ->x0);
-    double deltat = 0.0;  // length of tangential spring, not yet implemented  
-            
-    io.statParticleFile << setprecision(3) << demTime
-                        << " " << objectI->index    //order here is reversed to comply with coarse graining post processing (index should be first, see StatisticsVector.hcc line 1520(ith))
-                        << " " << partJ->particleIndex + stdObjects                 
-                        << " " << setprecision(wSt) << centre.dot(Xdirec) 
-                        << " " << setprecision(wSt) << centre.dot(Y) 
-                        << " " << setprecision(wSt) << centre.dot(Z) 
-                        << " " << setprecision(wSt) << overlap
-                        << " " << setprecision(wSt) << deltat
-                        << " " << setprecision(wSt) << abs(normNormalForce)
-                        << " " << setprecision(wSt) << abs(normTangForce)
-                        << " " << setprecision(wSt) << en.dot(Xdirec)
-                        << " " << setprecision(wSt) << en.dot(Y)
-                        << " " << setprecision(wSt) << en.dot(Z)
-                        << " " << setprecision(wSt) << et.dot(Xdirec)
-                        << " " << setprecision(wSt) << et.dot(Y)
-                        << " " << setprecision(wSt) << et.dot(Z)
-                        << endl;
+            && partJ->particleIndex < stdParticles) {   // \todo deal better with ghosts
+        
+        tVect centre = 0.5 * (objectI->x0 +  partJ->x0);
+        double deltat = 0.0;  // length of tangential spring, not yet implemented  
+        
+        io.statParticleFile << setprecision(3) << demTime
+                << " " << objectI->index    //order here is reversed to comply with coarse graining post processing (index should be first, see StatisticsVector.hcc line 1520(ith))
+                << " " << partJ->particleIndex + stdObjects                 
+                << " " << setprecision(wSt) << centre.dot(Xdirec) 
+                << " " << setprecision(wSt) << centre.dot(Y) 
+                << " " << setprecision(wSt) << centre.dot(Z) 
+                << " " << setprecision(wSt) << overlap
+                << " " << setprecision(wSt) << deltat
+                << " " << setprecision(wSt) << abs(normNormalForce)
+                << " " << setprecision(wSt) << abs(normTangForce)
+                << " " << setprecision(wSt) << en.dot(Xdirec)
+                << " " << setprecision(wSt) << en.dot(Y)
+                << " " << setprecision(wSt) << en.dot(Z)
+                << " " << setprecision(wSt) << et.dot(Xdirec)
+                << " " << setprecision(wSt) << et.dot(Y)
+                << " " << setprecision(wSt) << et.dot(Z)
+                << endl;
     }    
     
 }
