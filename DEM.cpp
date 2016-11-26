@@ -306,7 +306,7 @@ void DEM::discreteElementStep(IO& io){
         evalMaxDisp();
         if (maxDisp>neighListTrigger) { // maxDisp>0.25*(nebrRange-2.0*cutOff)
             maxDisp=0.0;
-            cout<<"new neighbor list"<<endl;
+            //cout<<"new neighbor list"<<endl;
             evalNeighborTable();
         }
 
@@ -1700,23 +1700,23 @@ void DEM::particleParticleContacts(IO& io) {
         // couple of contact candidates
         unsIntList::iterator ipj = ipi + 1;
          // pointers to particles
-        //const particle *parti=&particles[*ipi];
-        //const particle *partj=&particles[*ipj];
+
         
         particle *parti=&particles[*ipi];
         particle *partj=&particles[*ipj];
+        
         
         string s;
         if (parti->particleIndex>partj->particleIndex){
         s = "p" + to_string(parti->particleIndex) + ":p" + to_string(partj->particleIndex);
-        particle *parti=&particles[*ipi];
-        particle *partj=&particles[*ipj];
         }
         else {
-        s = "p" + to_string(partj->particleIndex) + ":p" + to_string(parti->particleIndex);
-        particle *partj=&particles[*ipi];
-        particle *parti=&particles[*ipj];
+        s = "p" + to_string(parti->particleIndex) + ":p" + to_string(partj->particleIndex);
+        partj=&particles[*ipi];
+        parti=&particles[*ipj];
         }
+       
+        
         
         // checking for overlap
         const double ri=parti->r;
@@ -1734,9 +1734,18 @@ void DEM::particleParticleContacts(IO& io) {
             // check for contact
         if (distance2<sigij2) {
             //particleParticleCollision(parti,partj,vectorDistance,io);
+            
+            cout<<parti->particleIndex<<" "<<partj->particleIndex<<" "<<s<<" ";
+            elongation_here.e.show();
+           
             particleParticleCollision(parti, partj, vectorDistance,io, elongation_here);
             elongation_here.p = spring;
             elongTable[s] = elongation_here;
+            
+            
+                elongation_here.e.show();
+                cout<<elongation_here.sliping<<endl;
+
         } else {      
                 elongTable.erase(s); 
             }
@@ -2000,15 +2009,19 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
             elmtJ->FSpringP = elmtJ->FSpringP - tangForce;
             elmtJ->FParticle = elmtJ->FParticle - tangForce;
         }
-
+        tangForce.show();
 // save particle-particle collision into statistics file
         //saveStatPPcollision(io,partI,partJ,overlap,normNormalForce,en,normTangForce,et);
 
     } else {
         //cout<<"normTangRelVelContact==0!!!"<<endl;
     } 
+                    tangRelVelContact.show();
+                    cout<<normNormalForce;
+                    
+            
   //ROLLING
-    const double rolling_coeff=0.1;
+    const double rolling_coeff=0.0;
     const tVect wrel=wI-wJ;
     const double wrel_norm=wrel.norm();
     const double RIJ=(partI->r*partJ->r)/(partI->r+partJ->r);
@@ -2131,7 +2144,7 @@ inline void DEM::wallParticleCollision(wall *wallI, const particle *partJ, const
 
     }
      //ROLLING
-    const double rolling_coeff=2*0.1;
+    const double rolling_coeff=2*0.0;
     const tVect wrel=-1.0*wJ;
     const double wrel_norm=wrel.norm();
     const double RIJ=(partJ->r);
@@ -2247,7 +2260,7 @@ inline void DEM::cylinderParticleCollision(cylinder *cylinderI, const particle *
         //wallI->FParticle = wallI->FParticle+ftv;
     }
         //ROLLING
-    const double rolling_coeff=2*0.1;
+    const double rolling_coeff=2*0.0;
     const tVect wrel=-1.0*wJ;
     const double wrel_norm=wrel.norm();
     const double RIJ=(partJ->r);
@@ -2360,7 +2373,7 @@ inline void DEM::objectParticleCollision(object *objectI, const particle *partJ,
         //saveStatOPcollision(io, objectI, partJ, overlap, normNormalForce, en, normTangForce, et);
     }
      //ROLLING
-    const double rolling_coeff=2*0.1;
+    const double rolling_coeff=2*0.0;
     const tVect wrel=-1.0*wJ;
     const double wrel_norm=wrel.norm();
     const double RIJ=(partJ->r);
@@ -2423,7 +2436,7 @@ tVect DEM::FRtangentialContact(const tVect& tangRelVelContact, const double& fn,
     const double ks = tangStiff;
     // maximum force due to static friction
     const double fsMax = friction*fn;
-    const double fdMax = friction*0.8*fn;
+    const double fdMax = friction*fn;
 
     // viscous force
     const tVect viscousForce = 2.0 * viscTang * sqrt(effMass * ks) * tangRelVelContact;
@@ -2433,8 +2446,7 @@ tVect DEM::FRtangentialContact(const tVect& tangRelVelContact, const double& fn,
      tVect et=tVect (0.0,0.0,0.0);
     if (tangRelVelContact.norm()!=0){
     et = tangRelVelContact / tangRelVelContact.norm();
-    }
- 
+    }   
   
 
     const tVect F_control = elongation.e * ks + viscousForce;
@@ -2448,6 +2460,7 @@ tVect DEM::FRtangentialContact(const tVect& tangRelVelContact, const double& fn,
        
        }
     else {
+        fs=fdMax*et;
         elongation.sliping=true;
     }
     }
@@ -2466,7 +2479,6 @@ tVect DEM::FRtangentialContact(const tVect& tangRelVelContact, const double& fn,
             fs=F_control;
             elongation.e = elongation.e + tangRelVelContact*deltat;
             elongation.sliping=false;
-            
             
         }
 
