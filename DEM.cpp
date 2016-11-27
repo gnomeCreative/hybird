@@ -1735,16 +1735,16 @@ void DEM::particleParticleContacts(IO& io) {
         if (distance2<sigij2) {
             //particleParticleCollision(parti,partj,vectorDistance,io);
             
-            cout<<parti->particleIndex<<" "<<partj->particleIndex<<" "<<s<<" ";
-            elongation_here.e.show();
+            //cout<<parti->particleIndex<<" "<<partj->particleIndex<<" "<<s<<" ";
+            
            
             particleParticleCollision(parti, partj, vectorDistance,io, elongation_here);
             elongation_here.p = spring;
             elongTable[s] = elongation_here;
             
             
-                elongation_here.e.show();
-                cout<<elongation_here.sliping<<endl;
+                //elongation_here.e.show();
+                //cout<<elongation_here.sliping<<endl;
 
         } else {      
                 elongTable.erase(s); 
@@ -1973,15 +1973,15 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
     const double normTangRelVelContact = tangRelVelContact.norm();
     // checking if there is any tangential motion
     if (normTangRelVelContact != 0.0) {
-
+        
         const double elong_old_norm=elongation.e.norm();
        
    
          double normElong = elongation.e.dot(en);
          const tVect normalElong = en*normElong;
+         
       
         elongation.e = elongation.e-normalElong;
-        
         
         if (elongation.e.norm()!=0){
         const double scaling=elong_old_norm/elongation.e.norm();
@@ -1991,7 +1991,8 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
             const double scaling=0.0;
             elongation.e=elongation.e*scaling;
         }
-
+        
+        //elongation.e.show();
         tVect tangForce = FRtangentialContact(tangRelVelContact, normNormalForce, effMass, elongation, sphereMat.frictionCoefPart,
                 sphereMat.linearStiff, sphereMat.viscTang);
         
@@ -2009,15 +2010,15 @@ inline void DEM::particleParticleCollision(const particle *partI, const particle
             elmtJ->FSpringP = elmtJ->FSpringP - tangForce;
             elmtJ->FParticle = elmtJ->FParticle - tangForce;
         }
-        tangForce.show();
+        //tangForce.show();
 // save particle-particle collision into statistics file
         //saveStatPPcollision(io,partI,partJ,overlap,normNormalForce,en,normTangForce,et);
 
     } else {
         //cout<<"normTangRelVelContact==0!!!"<<endl;
     } 
-                    tangRelVelContact.show();
-                    cout<<normNormalForce;
+                    //tangRelVelContact.show();
+                    //cout<<normNormalForce;
                     
             
   //ROLLING
@@ -2443,15 +2444,20 @@ tVect DEM::FRtangentialContact(const tVect& tangRelVelContact, const double& fn,
 
 
 
-     tVect et=tVect (0.0,0.0,0.0);
+     /*tVect et=tVect (0.0,0.0,0.0);
     if (tangRelVelContact.norm()!=0){
     et = tangRelVelContact / tangRelVelContact.norm();
-    }   
+    } */ 
   
 
     const tVect F_control = elongation.e * ks + viscousForce;
  
     const double F_control_norm = F_control.norm();
+    
+    tVect et=tVect (0.0,0.0,0.0);
+    if (F_control_norm!=0){
+    et = F_control / F_control_norm;
+    }
 
     if (!elongation.sliping){
     if (F_control_norm < fsMax) {
@@ -2462,18 +2468,20 @@ tVect DEM::FRtangentialContact(const tVect& tangRelVelContact, const double& fn,
     else {
         fs=fdMax*et;
         elongation.sliping=true;
+        const tVect  f=fdMax*et-viscousForce;
+        elongation.e=f/ks;
+        
     }
     }
     
     else{
        
-        if(viscousForce.norm()>fdMax){
-            fs=fdMax*et;
+        if(F_control_norm>fdMax){
             
-            const tVect  f=fdMax*et-viscousForce;
-            elongation.e=f/ks;
-            
-            
+        fs=fdMax*et;           
+        const tVect  f=fdMax*et-viscousForce;
+        elongation.e=f/ks;
+                        
         }
         else{
             fs=F_control;
@@ -2483,7 +2491,8 @@ tVect DEM::FRtangentialContact(const tVect& tangRelVelContact, const double& fn,
         }
 
     }
-  
+
+    
 
     return fs;
 }
