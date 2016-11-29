@@ -58,14 +58,16 @@ public:
     energy particleEnergy;
     // number of dem time steps before activating LB
     double demInitialRepeat;
-    // time step
+    // time step duration
     double deltat;
+    // total time duration
+    double demTime;
+    // time step
+    unsigned int demTimeStep;
     // force field (if not constant need to be calculated inside cycle) // should not be here!!!!!
     tVect demF;
     // material for elements // should not be here!!!
     material sphereMat;
-    // time
-    double demTime;
     // relative difference between time step in DEM and time step in LBM
     unsigned int multiStep;
     // ratio between time step and estimated duration of contacts
@@ -100,6 +102,7 @@ public:
         demSize.resize(3);
         demSize[0]=demSize[1]=demSize[2]=1.0;
         demTime=0.0;
+        demTimeStep=0;
         deltat=1.0;
         demF.reset();
         walls.clear();
@@ -139,6 +142,7 @@ public:
     void exportDataFile(IO& io);
     void exportRestartFile(IO& io);
     void printHeaderStatFile(IO& io);
+    void determineTimeStep(double& externalTimeStep);
 private:
     // initialization functions
     void compositeProperties();

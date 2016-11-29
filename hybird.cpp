@@ -39,7 +39,6 @@ void goCycle(IO& io, DEM& dem, LB& lb) {
 
     ++io.currentTimeStep;
     ++lb.time;
-    dem.demTime+=lb.unit.Time;
 
     if (io.demSolve) {
         dem.discreteElementStep(io);
@@ -314,6 +313,7 @@ int main(int argc, char** argv) {
     // setting time
     lb.time=0;
     dem.demTime=0.0;
+    dem.demTimeStep=0;
 
     // CYCLE /////////////////////////////
     // integrate in time

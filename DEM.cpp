@@ -194,32 +194,33 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
     
     // DEM time step
     // if multistep is 0, it should be calculated by the program here
-    if (elmts.size()) {
-        if (multiStep==0) {
-            // find critical deltaT
-            const double crit=criticalRatio*criticalTimeStep();
-            // if the critical time is bigger thatn the LBM time step, then just use the LBM time step
-            if (crit>=unit.Time) {
-                multiStep=1;
-                deltat=unit.Time;
-            }
-            // if it is lower, than calculate the number of substeps
-            else {
-                const double ratio=unit.Time/crit;
-                ASSERT(ratio>=1);
-                multiStep=std::floor(ratio)+1;
-                deltat=unit.Time/(double(multiStep));
-            }
-        }
-        // multistep can also be imposed by the user
-        else {
-            deltat=unit.Time/(double(multiStep));
-        }
-    }
-    else {
-        deltat=unit.Time;
-        multiStep=1;
-    }
+    determineTimeStep(unit.Time);
+//    if (elmts.size()) {
+//        if (multiStep==0) {
+//            // find critical deltaT
+//            const double crit=criticalRatio*criticalTimeStep();
+//            // if the critical time is bigger thatn the LBM time step, then just use the LBM time step
+//            if (crit>=unit.Time) {
+//                multiStep=1;
+//                deltat=unit.Time;
+//            }
+//            // if it is lower, calculate the number of substeps
+//            else {
+//                const double ratio=unit.Time/crit;
+//                ASSERT(ratio>=1);
+//                multiStep=std::floor(ratio)+1;
+//                deltat=unit.Time/(double(multiStep));
+//            }
+//        }
+//        // multistep can also be imposed by the user
+//        else {
+//            deltat=unit.Time/(double(multiStep));
+//        }
+//    }
+//    else {
+//        deltat=unit.Time;
+//        multiStep=1;
+//    }
     
     
     // initializing particles
@@ -293,16 +294,51 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
     cout<<"Numerical viscosity ="<<numVisc<<endl;
 }
 
+void DEM::determineTimeStep(double& externalTimeStep) {
+    // DEM time step
+    deltat=externalTimeStep;
+    // if multistep is 0, it should be calculated by the program here
+    if (elmts.size()) {
+        if (multiStep==0) {
+            // find critical deltaT
+            const double crit=criticalRatio*criticalTimeStep();
+            // if the critical time is bigger thatn the LBM time step, then just use the LBM time step
+            if (crit>=externalTimeStep) {
+                multiStep=1;
+                deltat=externalTimeStep;
+            }
+            // if it is lower, calculate the number of substeps
+            else {
+                const double ratio=externalTimeStep/crit;
+                ASSERT(ratio>=1);
+                multiStep=std::floor(ratio)+1;
+                deltat=externalTimeStep/(double(multiStep));
+            }
+        }
+        // multistep can also be imposed by the user
+        else {
+            deltat=externalTimeStep/(double(multiStep));
+        }
+    }
+    else {
+        deltat=externalTimeStep;
+        multiStep=1;
+    }
+}
+
 void DEM::discreteElementStep(IO& io){
     
     // set trigger for new neighbor list
-    double neighListTrigger=0.25*nebrRange;
+    static const double neighListTrigger=0.25*nebrRange;
     
     for (int demIter=0; demIter<multiStep; ++demIter) {
         
+        demTimeStep++;
+        demTime+=deltat;
+        
         // neighbor management
         evalMaxDisp();
-        if (maxDisp>neighListTrigger) { // maxDisp>0.25*(nebrRange-2.0*cutOff)
+        if (maxDisp>neighListTrigger) {
             maxDisp=0.0;
             //cout<<"new neighbor list"<<endl;
             evalNeighborTable();
@@ -315,7 +351,7 @@ void DEM::discreteElementStep(IO& io){
 	updateParticlesPredicted();
         
         // the statement below makes sure that .restart and .data are saved every multiple of saveCount
-        if (io.saveCount!=0 && io.currentTimeStep % io.saveCount==0){  
+        if (io.saveCount!=0 && demTimeStep % io.saveCount==0){  
             // export .data and .restart file
             exportDataFile(io);
             exportRestartFile(io);
@@ -957,6 +993,8 @@ void DEM::periodicObjects() {
     ghostList objectGhosts;
     objectGhosts.clear();
     
+    cout<<"Original objects: "<<originalObjects<<endl;
+    
     cout<<"Finding side object ghosts"<<endl;
     for (int b=0; b<pbcs.size(); ++b) {
         const tVect pbcVector=pbcs[b].v;
@@ -968,14 +1006,14 @@ void DEM::periodicObjects() {
             //            ASSERT(leftDist>0);
             //            ASSERT(rightDist>0)
             // first plane of couple (left)
-            if (leftDist<2.0*nebrRange) {
+            if (leftDist<2.0*nebrRange && leftDist>0.0) {
                 ghost dummyGhost;
                 dummyGhost.ghostIndex=objects[o].index;
                 dummyGhost.pbcVector=pbcVector;
                 objectGhosts.push_back(dummyGhost);
             }
             // second plane of couple (right), we copy only one time
-            else if (rightDist<2.0*nebrRange) {
+            else if (rightDist<2.0*nebrRange && rightDist>0.0) {
                 ghost dummyGhost;
                 dummyGhost.ghostIndex=objects[o].index;
                 dummyGhost.pbcVector=-1.0*pbcVector;
@@ -1090,7 +1128,7 @@ void DEM::evaluateForces(IO& io) {
         objects[o].FParticle.reset();
     }
     
-    if (io.saveCount != 0 && io.currentTimeStep % io.saveCount == 0){
+    if (io.saveCount != 0 && demTimeStep % io.saveCount == 0){
         // Open statistic file and print header
         printHeaderStatFile(io);    
     }    
@@ -2247,7 +2285,7 @@ void DEM::exportDataFile(IO& io){
     static int w = io.dataFile.precision() + 5;
     io.dataFile.open(io.dataFileName.c_str(), ios::app);
     
-    double zero = 0.0;
+    const double zero = 0.0;
     
     // set data header in order: N (standParticles + standObjects), time, simulation domain (volume)
     io.dataFile<< stdParticles + stdObjects
@@ -2260,8 +2298,8 @@ void DEM::exportDataFile(IO& io){
             << " " << setprecision(w) << demSize[2]
             << "\n";
     
-    tVect angPos = tVect(0.0,0.0,0.0);  // used to match MercuryDPM outputFiles 
-    tVect Obw = tVect(0.0,0.0,0.0);     // objects angular velocity, used to match MercuryDPM outputFiles 
+    const tVect angPos = tVect(0.0,0.0,0.0);  // used to match MercuryDPM outputFiles 
+    const tVect Obw = tVect(0.0,0.0,0.0);     // objects angular velocity, used to match MercuryDPM outputFiles 
     
     for (int o=0; o<stdObjects; ++o) {
         // export object variables
@@ -2300,7 +2338,7 @@ void DEM::exportDataFile(IO& io){
 
 void DEM::exportRestartFile(IO& io){
     
-    double counter = io.currentTimeStep/io.saveCount;
+    double counter = demTimeStep/io.saveCount;
     
     //  This lines are used to write one single files with restart data overtime
     // static int w = restartFile.precision() + 5;
@@ -2319,7 +2357,7 @@ void DEM::exportRestartFile(IO& io){
             << "\n" 
             << "timeStep " << setprecision(10) << deltat  //statisticExpTime //dem.deltaT   // is it deltaT or just the gap time between two file output??????
             << " time " << demTime    // it will be the end-simulation-time as the .restart file is overwritten till the end of simulation
-            << " ntimeSteps " << io.currentTimeStep
+            << " ntimeSteps " << demTimeStep
             << " timeMax " << demTime
             << "\n"
             << "systemDimensions " << 3              // Dimension simulation (Keep default 3)
@@ -2348,10 +2386,10 @@ void DEM::exportRestartFile(IO& io){
             << "Particles " << stdParticles + stdObjects
             << "\n";
     
-    tVect angPos = tVect(0.0,0.0,0.0);  // used to match MercuryDPM output files 
-    tVect Obw = tVect(0.0,0.0,0.0);     // objects angular velocity, used to match MercuryDPM output files 
-    double IndSpecies = 0.0;
-    double zero = 0.0;
+    const tVect angPos = tVect(0.0,0.0,0.0);  // used to match MercuryDPM output files 
+    const tVect Obw = tVect(0.0,0.0,0.0);     // objects angular velocity, used to match MercuryDPM output files 
+    const double IndSpecies = 0.0;
+    const double zero = 0.0;
     
     // Coarse Graining reads the indeces based on the saving order. Objects (fixed particles) must be first. The CG code recognises those because of the inverse mass 
     
@@ -2442,11 +2480,11 @@ void DEM::printHeaderStatFile(IO& io){
 
 void DEM::saveStatPPcollision( IO& io, const particle* partI, const particle* partJ, const double& overlap, const double& normNormalForce, const tVect& en, const double normTangForce, const tVect et) const {
     // Save data for coarse graining (DEM statistics)
-    if (io.saveCount != 0 && io.currentTimeStep % io.saveCount == 0 
-            && partI->particleIndex < stdParticles && partJ->particleIndex < stdParticles) {   // \todo deal better with ghosts
+    if (io.saveCount!=0 && demTimeStep % io.saveCount==0 
+            && partI->particleIndex<stdParticles && partJ->particleIndex<stdParticles) {   // \todo deal better with ghosts
         
-        tVect centre = 0.5 * (partI->x0 +  partJ->x0);
-        double deltat = 0.0;  // length of tangential spring, not yet implemented 
+        const tVect centre=0.5*(partI->x0 +  partJ->x0);
+        const double deltatSpring=0.0;  // length of tangential spring, not yet implemented 
         
         io.statParticleFile << setprecision(3) << demTime
                 << " " << partI->particleIndex + stdObjects
@@ -2455,7 +2493,7 @@ void DEM::saveStatPPcollision( IO& io, const particle* partI, const particle* pa
                 << " " << setprecision(wSt) << centre.dot(Y) 
                 << " " << setprecision(wSt) << centre.dot(Z) 
                 << " " << setprecision(wSt) << overlap
-                << " " << setprecision(wSt) << deltat
+                << " " << setprecision(wSt) << deltatSpring
                 << " " << setprecision(wSt) << abs(normNormalForce)
                 << " " << setprecision(wSt) << abs(normTangForce)
                 << " " << setprecision(wSt) << en.dot(Xdirec)
@@ -2471,12 +2509,12 @@ void DEM::saveStatPPcollision( IO& io, const particle* partI, const particle* pa
 void DEM::saveStatWPcollision( IO& io, const wall* wallI, const particle* partJ, const double& overlap, const double& normNormalForce, const tVect& en, const double normTangForce, const tVect et) const{
     
     // Save data for coarse graining (DEM statistics)
-    if (io.saveCount != 0 && io.currentTimeStep % io.saveCount == 0 
-            && partJ->particleIndex < stdParticles) {   // \todo deal better with ghosts        
+    if (io.saveCount!=0 && demTimeStep % io.saveCount==0 
+            && partJ->particleIndex<stdParticles) {   // \todo deal better with ghosts        
         
-        tVect centre = partJ->x0 - en * (partJ->r - overlap);
-        double deltat = 0.0;  // length of tangential spring, not yet implemented  
-        int wallIdx = wallI->index + 1; 
+        const tVect centre = partJ->x0 - en * (partJ->r - overlap);
+        const double deltatSpring = 0.0;  // length of tangential spring, not yet implemented  
+        const int wallIdx = wallI->index + 1; 
         
         io.statParticleFile << setprecision(3) << demTime
                 << " " << partJ->particleIndex + stdObjects
@@ -2485,7 +2523,7 @@ void DEM::saveStatWPcollision( IO& io, const wall* wallI, const particle* partJ,
                 << " " << setprecision(wSt) << centre.dot(Y) 
                 << " " << setprecision(wSt) << centre.dot(Z) 
                 << " " << setprecision(wSt) << overlap
-                << " " << setprecision(wSt) << deltat
+                << " " << setprecision(wSt) << deltatSpring
                 << " " << setprecision(wSt) << abs(normNormalForce)
                 << " " << setprecision(wSt) << abs(normTangForce)
                 << " " << setprecision(wSt) << en.dot(Xdirec)
@@ -2501,8 +2539,8 @@ void DEM::saveStatWPcollision( IO& io, const wall* wallI, const particle* partJ,
 void DEM::saveStatOPcollision( IO& io, const object* objectI, const particle* partJ, const double& overlap, const double& normNormalForce, const tVect& en, const double normTangForce, const tVect et) const {
     
     // Save data for coarse graining (DEM statistics)
-    if (io.saveCount != 0 && io.currentTimeStep % io.saveCount == 0 
-            && partJ->particleIndex < stdParticles) {   // \todo deal better with ghosts
+    if (io.saveCount!=0 && demTimeStep % io.saveCount==0 
+            && partJ->particleIndex<stdParticles) {   // \todo deal better with ghosts
         
         tVect centre = 0.5 * (objectI->x0 +  partJ->x0);
         double deltat = 0.0;  // length of tangential spring, not yet implemented  

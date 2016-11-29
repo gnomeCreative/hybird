@@ -479,9 +479,11 @@ void LB::initializeParticleBoundaries(particleList& particles) {
     cout<<"Initializing particle nodes"<<endl;
 #pragma omp parallel for
     for (int it=0; it<totNodes; ++it) {
+        // reset old list
+        types[it].setOutsideParticle();
         // checking if we are not in a boundary
         // whose properties have already been assigned and must be invariant in time
-        if (types[it].isFluid()) {
+        if (types[it].isActive()) {
             // checking if node is inside a particle
             for (int n=0; n<particles.size(); ++n) {
                 if (positions[it].insideSphere(particles[n].x0/unit.Length,particles[n].r/unit.Length)) { //-0.5?
@@ -941,7 +943,6 @@ void LB::initializeVariables() {
         }
     }
 }
-
 
 void LB::initializeWalls(wallList& walls, cylinderList& cylinders, objectList& objects) {
     cout<<"Initializing wall nodes"<<endl;
@@ -1871,10 +1872,10 @@ void LB::computeHydroForces(elmtList& elmts, particleList& particles) {
             const unsigned int particleIndex=types[index].getSolidIndex();
             const unsigned int clusterIndex=particles[particleIndex].clusterIndex;
             // calculating velocity of the solid boundary at the node (due to rotation of particles)
-            // vectorized radius (lattice units)
+            // vectorized radius (real units)
             const tVect radius=positions[index]-particles[particleIndex].x0/unit.Length+particles[particleIndex].radiusVec/unit.Length;
-            // update velocity of the particle node (u=v_center+omega x radius) (lattice units)
-            const tVect localVel=elmts[clusterIndex].xp1/unit.Speed+(elmts[clusterIndex].wpGlobal.cross(radius))/unit.AngVel;
+            // update velocity of the particle node (u=v_center+omega x radius) (real units)
+            const tVect localVel=elmts[clusterIndex].x1/unit.Speed+(elmts[clusterIndex].wGlobal.cross(radius))/unit.AngVel;
             
             // calculate differential velocity
             const tVect diffVel=nodes[index]->liquidFraction()*(nodes[index]->u-localVel);

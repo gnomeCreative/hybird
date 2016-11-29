@@ -26,8 +26,6 @@
       </nativedebugger>
       <runprofile version="9">
         <runcommandpicklist>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -cs shellConfigNet.cfg -cl lbmConfigBarrier.cfg -m halfNet.off -d ../results/barrier -n time</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier.cfg -d ../results/barrier -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_4_2d_90_2.cfg -d ../results/maddalena -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevis.cfg -d ../results/devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevis.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
@@ -36,8 +34,10 @@
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c configureFileDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_tramoggia_tappo_n.cfg -d F:\simulation_data\hybird\maddalena -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisFluid20161129.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c ./lbmConfigDevisFluid20161129.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommand>
+        <runcommand>"${OUTPUT_PATH}" -c ./lbmConfigDevisFluid20161129.cfg -d F:\simulation_data\hybird\devis -n time</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>
@@ -71,7 +71,6 @@
       </nativedebugger>
       <runprofile version="9">
         <runcommandpicklist>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -cs configNet.cfg -cl configAvalanche.cfg -m meshNet.off -d ../results/avalanche -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -cs shellConfigNet.cfg -cl lbmConfigNet.cfg -m meshNet.off -d ../results/avalanche -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -cl lbmConfigSplash.cfg -cs my_config.cfg -m mesh.off -d ../results/AAAsplash -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -cl lbmConfigSettling.cfg -cs my_config.cfg -m mesh.off -d ../results/AAAsettling -n time</runcommandpicklistitem>
@@ -81,8 +80,9 @@
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevis.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_tramoggia_tappo_n.cfg -d F:\simulation_data\hybird\maddalena -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisFluid20161129.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" -c lbmConfigBarrier_tramoggia_tappo_n.cfg -d F:\simulation_data\hybird\maddalena -n time</runcommand>
+        <runcommand>"${OUTPUT_PATH}" -c lbmConfigDevisFluid20161129.cfg -d F:\simulation_data\hybird\devis -n time</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>
