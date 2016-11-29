@@ -207,6 +207,8 @@ private:
     
     void deleteParticleElongation();
     void deleteWallElongation();
+    tVect rollingContact(const tVect& wI,const tVect& wJ,const double effRad,const double& fn, 
+             const double& rolling);
 };
 
 #endif	/* DEM_H */
