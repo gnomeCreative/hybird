@@ -26,8 +26,6 @@
       </nativedebugger>
       <runprofile version="9">
         <runcommandpicklist>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigBarrier_4_2d_90_2.cfg -d ../results/maddalena -n time</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevis.cfg -d ../results/devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevis.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c configureDevisSmall.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
@@ -36,8 +34,10 @@
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisFluid.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c lbmConfigDevisFluid20161129.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c ./lbmConfigDevisFluid20161129.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c ./input/lbmConfigDevisFluid20161129.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c ./input/lbmConfigDevisFluid20161201.cfg -d F:\simulation_data\hybird\devis -n time</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" -c ./lbmConfigDevisFluid20161129.cfg -d F:\simulation_data\hybird\devis -n time</runcommand>
+        <runcommand>"${OUTPUT_PATH}" -c ./input/lbmConfigDevisFluid20161201.cfg -d F:\simulation_data\hybird\devis -n time</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

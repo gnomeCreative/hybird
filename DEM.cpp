@@ -47,7 +47,8 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line){
             sphereMat.dampCoeff=-1.0*sqrt(5)*log(sphereMat.restitution)/sqrt((log(sphereMat.restitution)*log(sphereMat.restitution)+M_PI*M_PI));
         }
         case LINEAR: {
-            sphereMat.dampCoeff=-1.0*log(sphereMat.restitution)/sqrt((log(sphereMat.restitution)*log(sphereMat.restitution)+M_PI*M_PI));
+            sphereMat.dampCoeff=-1.0*sqrt(2.0)*log(sphereMat.restitution)/sqrt((log(sphereMat.restitution)*log(sphereMat.restitution)+M_PI));
+            ASSERT(sphereMat.dampCoeff<1.0);
         }
     }
     
@@ -192,35 +193,32 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
     // acceleration field
     demF=lbF*unit.Accel;
     
-    // DEM time step
-    // if multistep is 0, it should be calculated by the program here
-    determineTimeStep(unit.Time);
-//    if (elmts.size()) {
-//        if (multiStep==0) {
-//            // find critical deltaT
-//            const double crit=criticalRatio*criticalTimeStep();
-//            // if the critical time is bigger thatn the LBM time step, then just use the LBM time step
-//            if (crit>=unit.Time) {
-//                multiStep=1;
-//                deltat=unit.Time;
-//            }
-//            // if it is lower, calculate the number of substeps
-//            else {
-//                const double ratio=unit.Time/crit;
-//                ASSERT(ratio>=1);
-//                multiStep=std::floor(ratio)+1;
-//                deltat=unit.Time/(double(multiStep));
-//            }
-//        }
-//        // multistep can also be imposed by the user
-//        else {
-//            deltat=unit.Time/(double(multiStep));
-//        }
-//    }
-//    else {
-//        deltat=unit.Time;
-//        multiStep=1;
-//    }
+    if (elmts.size()) {
+        if (multiStep==0) {
+            // find critical deltaT
+            const double crit=criticalRatio*criticalTimeStep();
+            // if the critical time is bigger thatn the LBM time step, then just use the LBM time step
+            if (crit>=unit.Time) {
+                multiStep=1;
+                deltat=unit.Time;
+            }
+            // if it is lower, calculate the number of substeps
+            else {
+                const double ratio=unit.Time/crit;
+                ASSERT(ratio>=1);
+                multiStep=std::floor(ratio)+1;
+                deltat=unit.Time/(double(multiStep));
+            }
+        }
+        // multistep can also be imposed by the user
+        else {
+            deltat=unit.Time/(double(multiStep));
+        }
+    }
+    else {
+        deltat=unit.Time;
+        multiStep=1;
+    }
     
     
     // initializing particles
@@ -263,6 +261,10 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
         // calculate mass
         totMass+=elmts[n].m;
     }
+    
+    // DEM time step
+    // if multistep is 0, it should be calculated by the program here
+    determineTimeStep(unit.Time);
     
     cout<<"DEM parameters\n";
     cout<<"domain size: xdim ="<<demSize[0]<<"; ydim= "<<demSize[1]<<"; zdim= "<<demSize[2]<<";\n";
@@ -987,19 +989,17 @@ void DEM::initializePbcs(unsIntList& boundary, unsIntList& lbSize, measureUnits&
 
 void DEM::periodicObjects() {
     
-    const unsigned int originalObjects=objects.size();
-   
     // copy objects
-    ghostList objectGhosts;
+    ghostList objectGhosts; 
     objectGhosts.clear();
     
-    cout<<"Original objects: "<<originalObjects<<endl;
+    cout<<"Original objects: "<<stdObjects<<endl;
     
     cout<<"Finding side object ghosts"<<endl;
     for (int b=0; b<pbcs.size(); ++b) {
         const tVect pbcVector=pbcs[b].v;
         // cycle through objects
-        for (int o=0; o<originalObjects; ++o) {
+        for (int o=0; o<stdObjects; ++o) {
             // distances from the periodic walls
             const double leftDist=pbcs[b].pl1.dist(objects[o].x0);
             const double rightDist=pbcs[b].pl2.dist(objects[o].x0);
@@ -1051,7 +1051,7 @@ void DEM::periodicObjects() {
         for (int og=0; og<objectGhosts.size(); ++og) {
             //getting original particle index
             const unsigned int originObjectIndex=objectGhosts[og].ghostIndex;
-            const unsigned int ghostObjectIndex=originalObjects+og;
+            const unsigned int ghostObjectIndex=stdObjects+og;
             // reconstructing ghost objects
             object dummyObject=objects[originObjectIndex];
             dummyObject.x0=dummyObject.x0+objectGhosts[og].pbcVector;
@@ -1236,10 +1236,6 @@ double DEM::criticalTimeStep() const {
         minRad=std::min(minRad,elmts[n].radius);
         minMass=std::min(minMass,elmts[n].m);
     }
-    for (int n=0; n<elmts.size(); ++n) {
-        minRad=std::min(minRad,elmts[n].radius);
-        minMass=std::min(minMass,elmts[n].m);
-    }
     
     
     // double const k=8.0/15.0*sphereMat.youngMod/(1-sphereMat.poisson*sphereMat.poisson)*sqrt(minRad);
@@ -1251,7 +1247,7 @@ double DEM::criticalTimeStep() const {
             const double maxDist=std::max(demSize[0],std::max(demSize[1],demSize[2]));
             // modulus of acceleration
             const double maxAccel=demF.norm();
-            // estimate maximum velocity (assuming governed by acceleration field))
+            // estimate maximum velocity (assuming governed by acceleration field)
             const double maxVel=std::sqrt(2.0*maxAccel*maxDist);
             // see Landau & Lifshitz, or better Antypov & Elliott
             deltaTCrit=2.214*(2.0*minRad)*std::pow(sphereMat.density/sphereMat.youngMod,2.0/5.0)*std::pow(maxVel,1.0/5.0);
@@ -1260,10 +1256,12 @@ double DEM::criticalTimeStep() const {
         }
         case LINEAR: {
             // sphereMat.dampCoeff is probably worng, check again
-            deltaTCrit=M_PI/sqrt(sphereMat.linearStiff/minMass-sphereMat.dampCoeff*sphereMat.dampCoeff*sphereMat.linearStiff/minMass);
+            deltaTCrit=M_PI/sqrt(sphereMat.linearStiff/minMass*(1.0-sphereMat.dampCoeff*sphereMat.dampCoeff));
+            cout<<"Computed duration of collisions: k="<<sphereMat.linearStiff<<" m="<<minMass<<", then t_c="<<deltaTCrit<<endl;
             break;
         }
     }
+    
     return deltaTCrit;
 }
 
@@ -2453,7 +2451,7 @@ void DEM::printHeaderStatFile(IO& io){
     
     io.statParticleFile.open(io.statisticFileName.c_str(), ios::app);
     
-    double zero = 0.0;
+    static const double zero=0.0;
     
     // set statistic header in order: time, min and max simulation domain (volume), min max particle radii
     io.statParticleFile << "#" 

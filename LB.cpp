@@ -159,7 +159,6 @@ void LB::latticeBoltzmannGet(GetPot& lbmCfgFile, GetPot& command_line) {
     PARSE_CLASS_MEMBER(lbmCfgFile, lbFY, "lbFY",0.0);
     PARSE_CLASS_MEMBER(lbmCfgFile, lbFZ, "lbFZ",0.0);
     lbF=tVect(lbFX, lbFY, lbFZ);
-    lbF/=unit.Accel;
     switch (problemName) {
         case demChute: {
             double chuteInclination=0.0;
@@ -169,9 +168,9 @@ void LB::latticeBoltzmannGet(GetPot& lbmCfgFile, GetPot& command_line) {
             lbFY = -1.0*0.0;
             lbFZ = -1.0*gravity*cos(chuteInclination*(M_PI/180));
             lbF=tVect(lbFX, lbFY, lbFZ);
-            lbF/=unit.Accel;
         }
     }
+    lbF/=unit.Accel;   
     
     boundary.resize(lbmDim);
     PARSE_CLASS_MEMBER(lbmCfgFile, boundary[0], "boundary0",1);
