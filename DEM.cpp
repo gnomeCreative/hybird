@@ -49,7 +49,8 @@ void DEM::discreteElementGet(GetPot& lbmCfgFile, GetPot& command_line) {
         }
         case LINEAR:
         {
-            sphereMat.dampCoeff = -1.0 * log(sphereMat.restitution) / sqrt((log(sphereMat.restitution) * log(sphereMat.restitution) + M_PI * M_PI));
+            sphereMat.dampCoeff=-1.0*log(sphereMat.restitution)/sqrt((log(sphereMat.restitution)*log(sphereMat.restitution)+M_PI*M_PI));
+            ASSERT(sphereMat.dampCoeff<1.0);
         }
     }
 
@@ -196,32 +197,7 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
     // capping distance for lubrication forces
     minDistLub = 0.01 * unit.Length;
 
-    // DEM time step
-    // if multistep is 0, it should be calculated by the program here
-    if (elmts.size()) {
-        if (multiStep == 0) {
-            // find critical deltaT
-            const double crit = criticalRatio * criticalTimeStep();
-            // if the critical time is bigger thatn the LBM time step, then just use the LBM time step
-            if (crit >= unit.Time) {
-                multiStep = 1;
-                deltat = unit.Time;
-            }                // if it is lower, than calculate the number of substeps
-            else {
-                const double ratio = unit.Time / crit;
-                ASSERT(ratio >= 1);
-                multiStep = std::floor(ratio) + 1;
-                deltat = unit.Time / (double(multiStep));
-            }
-        }            // multistep can also be imposed by the user
-        else {
-            deltat = unit.Time / (double(multiStep));
-        }
-    } else {
-        deltat = unit.Time;
-        multiStep = 1;
-    }
-
+  
 
     // initializing particles
     const double partDensity = sphereMat.density;
@@ -263,6 +239,34 @@ void DEM::discreteElementInit(unsIntList& boundary, unsIntList& lbSize, measureU
         // calculate mass
         totMass += elmts[n].m;
     }
+    
+    
+     // DEM time step
+    // if multistep is 0, it should be calculated by the program here
+    if (elmts.size()) {
+        if (multiStep == 0) {
+            // find critical deltaT
+            const double crit = criticalRatio * criticalTimeStep();
+            // if the critical time is bigger thatn the LBM time step, then just use the LBM time step
+            if (crit >= unit.Time) {
+                multiStep = 1;
+                deltat = unit.Time;
+            }                // if it is lower, than calculate the number of substeps
+            else {
+                const double ratio = unit.Time / crit;
+                ASSERT(ratio >= 1);
+                multiStep = std::floor(ratio) + 1;
+                deltat = unit.Time / (double(multiStep));
+            }
+        }            // multistep can also be imposed by the user
+        else {
+            deltat = unit.Time / (double(multiStep));
+        }
+    } else {
+        deltat = unit.Time;
+        multiStep = 1;
+    }
+
 
     cout << "DEM parameters\n";
     cout << "domain size: xdim =" << demSize[0] << "; ydim= " << demSize[1] << "; zdim= " << demSize[2] << ";\n";
@@ -1086,7 +1090,7 @@ void DEM::evaluateForces(IO& io) {
         // rotational velocity (body-fixed reference frame)
         //const tVect wBf=2.0*quat2vec( q0adj.multiply( elmts[n].qp1 ) );
         // moment in global reference frame
-        const tVect moment = MVisc + elmts[n].MHydro + elmts[n].MParticle + elmts[n].MWall + elmts[n].MRolling;
+        const tVect moment = MVisc + elmts[n].MHydro + elmts[n].MParticle + elmts[n].MWall;// + elmts[n].MRolling;
 
         // moment in body-fixed reference frame
         //if (elmts[n].size
@@ -1185,6 +1189,7 @@ double DEM::criticalTimeStep() const {
         {
             // sphereMat.dampCoeff is probably worng, check again
             deltaTCrit = M_PI / sqrt(sphereMat.linearStiff / minMass - sphereMat.dampCoeff * sphereMat.dampCoeff * sphereMat.linearStiff / minMass);
+            cout<<"Computed duration of collisions: k="<<sphereMat.linearStiff<<" alpha_n="<<sphereMat.dampCoeff<<" m="<<minMass<<", then t_c="<<deltaTCrit<<endl;
             break;
         }
     }
